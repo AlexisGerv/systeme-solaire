@@ -14,7 +14,10 @@ soleil.init();
 const terre = new Terre(espace.scene);
 terre.init();
 
-const lune = new Lune(espace.scene);
+// La Lune s'attache à l'anchor de la Terre : même position que la Terre,
+// mais sans hériter de sa rotation propre. Du coup la Lune suit la Terre
+// dans son orbite autour du Soleil, et orbite proprement autour d'elle.
+const lune = new Lune(espace.scene, terre.anchor);
 lune.init();
 
 // 3. Boucle d'animation : on met à jour chaque astre, puis on rend la scène

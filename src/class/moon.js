@@ -1,14 +1,19 @@
 import * as THREE from 'three';
 import Astre from './astre.js';
 
-// La Lune n'hérite PAS d'Astre : elle est plus simple, pas besoin de pivot ni d'orbite.
+// La Lune hérite d'Astre, comme la Terre. La différence : son "parent"
+// n'est pas la scène mais le pivot de la Terre, pour qu'elle suive la Terre
+// dans son orbite autour du Soleil.
 export default class Lune extends Astre {
-    constructor(scene) {
+    constructor(scene, parent) {
         super({
             scene,
+            parent,                  // <- transmis à Astre : la Lune s'attache au pivot reçu
             texturePath: '/2k_moon.jpg',
             rayon: 0.27,
-            vitesseRotation: 0.01
+            vitesseRotation: 0.01,
+            distanceOrbite: 1.5,     // distance Lune-Terre
+            vitesseOrbite: 0.03,     // la Lune orbite plus vite que la Terre
         });
     }
 }

@@ -10,7 +10,8 @@ export default class Terre extends Astre {
             rayon: 1,
             vitesseRotation: 0.01,
             distanceOrbite: 5,
-            vitesseOrbite: 0.005
+            vitesseOrbite: 0.005,
+            inclinaison: 23.5,   // axe de la Terre incliné de 23.5° (saisons)
         });
     }
     

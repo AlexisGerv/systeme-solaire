@@ -21,6 +21,7 @@ export default class Astre {
     distanceOrbite = 0,        // 0 = pas d'orbite (cas du Soleil au centre)
     vitesseOrbite = 0,
     emissif = false,           // true = brille seul (Soleil) ; false = éclairé (Terre, Lune)
+    inclinaison = 0,           // inclinaison de l'axe en degrés (Terre : 23.5°)
   }) {
     // On garde les paramètres pour les utiliser dans init() et update()
     this.scene = scene;
@@ -31,30 +32,60 @@ export default class Astre {
     this.distanceOrbite = distanceOrbite;
     this.vitesseOrbite = vitesseOrbite;
     this.emissif = emissif;
+    this.inclinaison = inclinaison;
   }
 
   init() {
-    // 1. Le pivot : un Group placé au centre du parent.
-    //    On le fera tourner pour produire l'effet d'orbite.
+    // Hiérarchie : parent -> pivot (tourne pour l'orbite)
+    //                      -> anchor (décalé à distanceOrbite, NE TOURNE PAS)
+    //                                 -> mesh (tourne sur son axe propre)
+    //
+    // Pourquoi cet "anchor" ? Pour pouvoir y accrocher des satellites
+    // (ex: la Lune sur la Terre) à la BONNE position, sans qu'ils héritent
+    // de la rotation propre du mesh.
+
+    // 1. Le pivot : Group au centre du parent, tourne pour produire l'orbite.
     this.pivot = new THREE.Group();
     this.parent.add(this.pivot);
 
-    // 2. Géométrie + texture
+    // 2. L'anchor : positionné là où se trouve l'astre.
+    //    Sert de point d'ancrage pour les satellites (lunes, anneaux, etc.).
+    //    Volontairement PAS incliné pour que les satellites orbitent dans le
+    //    plan de l'écliptique, pas dans le plan équatorial de l'astre.
+    this.anchor = new THREE.Group();
+    this.anchor.position.x = this.distanceOrbite;
+    this.pivot.add(this.anchor);
+
+    // 3. Le tilt : groupe figé à l'angle d'inclinaison.
+    //    Le mesh tourne sur SON axe Y local, qui est désormais incliné en
+    //    monde -> l'axe Nord-Sud reste pointé dans la même direction.
+    this.tilt = new THREE.Group();
+    this.tilt.rotation.z = THREE.MathUtils.degToRad(this.inclinaison);
+    this.anchor.add(this.tilt);
+
+    // 4. Géométrie + texture
     const geometry = new THREE.SphereGeometry(this.rayon, 64, 64);
     const texture = new THREE.TextureLoader().load(this.texturePath);
     texture.colorSpace = THREE.SRGBColorSpace;
 
-    // 3. Matériau : Basic = brille seul, Standard = réagit aux lumières
+    // 5. Matériau : Basic = brille seul, Standard = réagit aux lumières
     const material = this.emissif
       ? new THREE.MeshBasicMaterial({ map: texture })
       : new THREE.MeshStandardMaterial({ map: texture });
 
-    // 4. Le mesh, décalé du pivot par la distance d'orbite.
-    //    Le mesh est exposé en `this.mesh` pour que les sous-classes puissent
-    //    l'utiliser (par ex. attacher la Lune au pivot de la Terre).
+    // 6. Le mesh : ajouté au tilt (à la bonne position et incliné).
+    //    Sa rotation propre se fait autour de son axe Y local incliné.
     this.mesh = new THREE.Mesh(geometry, material);
-    this.mesh.position.x = this.distanceOrbite;
-    this.pivot.add(this.mesh);
+
+    // Ombres : seuls les astres NON émissifs participent.
+    //  - castShadow    : l'astre projette une ombre sur les autres
+    //  - receiveShadow : la surface peut être assombrie par d'autres astres
+    if (!this.emissif) {
+      this.mesh.castShadow = true;
+      this.mesh.receiveShadow = true;
+    }
+
+    this.tilt.add(this.mesh);
   }
 
   update() {
