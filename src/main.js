@@ -11,18 +11,18 @@ const espace = new Espace();
 const soleil = new Soleil(espace.scene);
 soleil.init();
 
-// const terre = new Terre(espace.scene);
-// terre.init();
+const terre = new Terre(espace.scene);
+terre.init();
 
-// const lune = new Lune(espace.scene);
-// lune.init();
+const lune = new Lune(espace.scene);
+lune.init();
 
 // 3. Boucle d'animation : on met à jour chaque astre, puis on rend la scène
 function animate() {
   requestAnimationFrame(animate);
   soleil.update();
-  // terre.update();
-  // lune.update();
+  terre.update();
+  lune.update();
   espace.render();
 }
 
