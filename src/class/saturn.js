@@ -1,0 +1,58 @@
+import * as THREE from 'three';
+import Astre from './astre.js';
+
+// Saturne hérite d'Astre comme les autres, mais surcharge init() pour
+// ajouter ses anneaux (comme le Soleil surcharge init() pour sa lumière).
+export default class Saturne extends Astre {
+  constructor(scene) {
+    super({
+      scene,
+      texturePath: '/2k_saturn.jpg',
+      rayon: 1.9,
+      vitesseRotation: 0.022,
+      distanceOrbite: 25,
+      vitesseOrbite: 0.0017,
+      inclinaison: 26.7,
+    });
+  }
+
+  init() {
+    super.init();
+
+    // Les anneaux : un disque (RingGeometry) à plat dans le plan équatorial.
+    const rayonInterieur = this.rayon * 1.2;
+    const rayonExterieur = this.rayon * 2.2;
+    const geometrie = new THREE.RingGeometry(rayonInterieur, rayonExterieur, 128);
+
+    // Problème : par défaut, RingGeometry mappe les UV de façon inutile pour
+    // une texture d'anneau (qui est une bande horizontale "intérieur->extérieur").
+    // On réécrit les UV pour que U = position radiale (0 = bord interne, 1 = externe).
+    const positions = geometrie.attributes.position;
+    const uvs = geometrie.attributes.uv;
+    for (let i = 0; i < positions.count; i++) {
+      const x = positions.getX(i);
+      const y = positions.getY(i);
+      const r = Math.sqrt(x * x + y * y);
+      const u = (r - rayonInterieur) / (rayonExterieur - rayonInterieur);
+      uvs.setXY(i, u, 1);
+    }
+    uvs.needsUpdate = true;
+
+    const texture = new THREE.TextureLoader().load('/2k_saturn_ring_alpha.png');
+    texture.colorSpace = THREE.SRGBColorSpace;
+
+    const materiau = new THREE.MeshStandardMaterial({
+      map: texture,
+      side: THREE.DoubleSide,  // visible des deux côtés
+      transparent: true,        // la texture a un canal alpha
+    });
+
+    const anneaux = new THREE.Mesh(geometrie, materiau);
+    // RingGeometry est dans le plan XY ; on la couche dans le plan XZ
+    // (le plan équatorial de la planète).
+    anneaux.rotation.x = Math.PI / 2;
+    anneaux.receiveShadow = true;
+    // Ajouté au tilt : les anneaux suivent l'inclinaison de Saturne.
+    this.tilt.add(anneaux);
+  }
+}

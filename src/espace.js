@@ -10,6 +10,18 @@ export default class Espace {
     // 1. La scène : conteneur 3D commun à tous les astres
     this.scene = new THREE.Scene();
 
+    // Fond étoilé (Voie lactée) projeté sur une sphère équirectangulaire.
+    const loader = new THREE.TextureLoader();
+    const bgTexture = loader.load('/8k_stars_milky_way.jpg');
+    bgTexture.mapping = THREE.EquirectangularReflectionMapping;
+    bgTexture.colorSpace = THREE.SRGBColorSpace;
+    this.scene.background = bgTexture;
+
+    // Lumière ambiante très faible : empêche les faces non éclairées par
+    // le Soleil d'être totalement noires (un peu de lumière "rebondie").
+    const ambiante = new THREE.AmbientLight(0xffffff, 0.08);
+    this.scene.add(ambiante);
+
     // 2. La caméra : point de vue unique sur le système solaire
     this.camera = new THREE.PerspectiveCamera(
       60,
@@ -17,7 +29,8 @@ export default class Espace {
       0.1,
       1000,
     );
-    this.camera.position.z = 15;
+    // Recul suffisant pour voir tout le système (Neptune est à ~38 du Soleil).
+    this.camera.position.set(0, 25, 75);
 
     // 3. Le renderer : un seul <canvas> pour tout le monde
     this.renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -40,7 +53,7 @@ export default class Espace {
     this.controls.enableDamping = true;
     // Bornes de zoom pour éviter de partir trop loin ou de rentrer dans le Soleil.
     this.controls.minDistance = 3;
-    this.controls.maxDistance = 80;
+    this.controls.maxDistance = 250;
 
     // 5. Garder un rendu correct si la fenêtre est redimensionnée
     window.addEventListener('resize', () => {
