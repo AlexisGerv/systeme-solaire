@@ -12,10 +12,11 @@ export default class CeintureAsteroides {
     nombre = 1500,
     rayonMin = 13.5,
     rayonMax = 16,
-    epaisseur = 0.3,        // dispersion verticale (±)
+    epaisseur = 0.3,
     tailleMin = 0.02,
     tailleMax = 0.1,
     vitesseOrbite = 0.0032, // entre celle de Mars (0.004) et Jupiter (0.0022)
+    couleur = 0x8a7560,
   } = {}) {
     this.scene = scene;
     this.nombre = nombre;
@@ -25,6 +26,7 @@ export default class CeintureAsteroides {
     this.tailleMin = tailleMin;
     this.tailleMax = tailleMax;
     this.vitesseOrbite = vitesseOrbite;
+    this.couleur = couleur;
   }
 
   init() {
@@ -37,9 +39,9 @@ export default class CeintureAsteroides {
     // la différence, et 1500 sphères haute résolution coûteraient cher.
     const geometry = new THREE.SphereGeometry(1, 6, 6);
     const material = new THREE.MeshStandardMaterial({
-      color: 0x8a7560, // gris-brun rocheux
+      color: this.couleur,
       roughness: 1,
-      flatShading: true, // facettes visibles -> aspect "caillou"
+      flatShading: true,
     });
 
     this.mesh = new THREE.InstancedMesh(geometry, material, this.nombre);

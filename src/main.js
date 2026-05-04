@@ -10,6 +10,7 @@ import Saturne from './class/saturn.js';
 import Uranus from './class/uranus.js';
 import Neptune from './class/neptune.js';
 import CeintureAsteroides from './class/asteroid_belt.js';
+import CeintureKuiper from './class/kuiper_belt.js';
 import './style.css';
 
 // 1. On crée l'espace : il possède la scène, la caméra et le renderer
@@ -55,8 +56,12 @@ uranus.init();
 const neptune = new Neptune(espace.scene);
 neptune.init();
 
+// Ceinture de Kuiper : au-delà de Neptune.
+const kuiper = new CeintureKuiper(espace.scene);
+kuiper.init();
+
 // On regroupe tous les astres pour pouvoir les mettre à jour en une seule boucle.
-const astres = [soleil, mercure, venus, terre, lune, mars, ceinture, jupiter, saturne, uranus, neptune];
+const astres = [soleil, mercure, venus, terre, lune, mars, ceinture, jupiter, saturne, uranus, neptune, kuiper];
 
 // 4. Boucle d'animation : on met à jour chaque astre, puis on rend la scène
 function animate() {

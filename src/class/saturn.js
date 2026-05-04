@@ -24,9 +24,6 @@ export default class Saturne extends Astre {
     const rayonExterieur = this.rayon * 2.2;
     const geometrie = new THREE.RingGeometry(rayonInterieur, rayonExterieur, 128);
 
-    // Problème : par défaut, RingGeometry mappe les UV de façon inutile pour
-    // une texture d'anneau (qui est une bande horizontale "intérieur->extérieur").
-    // On réécrit les UV pour que U = position radiale (0 = bord interne, 1 = externe).
     const positions = geometrie.attributes.position;
     const uvs = geometrie.attributes.uv;
     for (let i = 0; i < positions.count; i++) {
