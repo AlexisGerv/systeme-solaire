@@ -10,7 +10,7 @@ export default class Soleil extends Astre {
       scene,
       texturePath: '/2k_sun.jpg',
       rayon: 2,
-      vitesseRotation: 0.002,
+      vitesseRotation: 0.000394, // 0.01 / 25.38 jours
       emissif: true, // le Soleil brille tout seul
       // pas de distanceOrbite ni vitesseOrbite : le Soleil est au centre
     });

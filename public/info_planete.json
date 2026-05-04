@@ -1,14 +1,14 @@
 {
   "sun": {
     "radius": 696340,
-    "texture": "sun.jpg",
+    "texture": "2k_sun.jpg",
     "rotation_period": 25.38
   },
   "mercury": {
     "radius": 2439.7,
     "distance": 57910,
     "orbital_period": 88,
-    "texture": "mercury.jpg",
+    "texture": "2k_mercury.jpg",
     "rotation_period": 58.6,
     "axial_tilt": 0.034,
     "moons": []
@@ -17,7 +17,7 @@
     "radius": 6051.8,
     "distance": 108200,
     "orbital_period": 224.7,
-    "texture": "venus.jpg",
+    "texture": "2k_venus_atmosphere.jpg",
     "rotation_period": 243,
     "axial_tilt": 177.4,
     "moons": []
@@ -26,7 +26,7 @@
     "radius": 6371,
     "distance": 149600,
     "orbital_period": 365.25,
-    "texture": "earth.jpg",
+    "texture": "2k_earth_daymap.jpg",
     "rotation_period": 1,
     "axial_tilt": 23.44,
     "moons": [
@@ -42,7 +42,7 @@
     "radius": 3389.5,
     "distance": 227940,
     "orbital_period": 687,
-    "texture": "mars.jpg",
+    "texture": "2k_mars.jpg",
     "rotation_period": 1.03,
     "axial_tilt": 25.19,
     "moons": [
@@ -98,7 +98,7 @@
     "radius": 58232,
     "distance": 1433449,
     "orbital_period": 10759.2,
-    "texture": "saturn.jpg",
+    "texture": "2k_saturn.jpg",
     "rotation_period": 0.45,
     "axial_tilt": 26.73,
     "moons": [

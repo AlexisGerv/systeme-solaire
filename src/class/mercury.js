@@ -5,11 +5,11 @@ export default class Mercure extends Astre {
     super({
       scene,
       texturePath: '/2k_mercury.jpg',
-      rayon: 0.38,
-      vitesseRotation: 0.002,   // Mercure tourne très lentement sur elle-même
+      rayon: 0.383,              // 2439.7 / 6371 km
+      vitesseRotation: 0.000171, // 0.01 / 58.6 jours
       distanceOrbite: 3.5,
-      vitesseOrbite: 0.012,     // mais c'est la plus rapide en orbite
-      inclinaison: 0.03,
+      vitesseOrbite: 0.02074,   // 0.005 × 365.25 / 88 jours
+      inclinaison: 0.034,
     });
   }
 }

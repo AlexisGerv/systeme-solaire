@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\Alexi\\\\Documents\\\\MMI 2\\\\Semestre 4\\\\SAE\\\\systeme-solaire\" -Recurse -Force)",
+      "Bash(Select-Object -First 50)",
+      "Bash(Format-Table FullName)"
+    ]
+  }
+}

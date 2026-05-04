@@ -11,9 +11,9 @@ export default class Lune extends Astre {
             parent,                  // <- transmis à Astre : la Lune s'attache au pivot reçu
             texturePath: '/2k_moon.jpg',
             rayon: 0.27,
-            vitesseRotation: 0.01,
-            distanceOrbite: 1.5,     // distance Lune-Terre
-            vitesseOrbite: 0.03,     // la Lune orbite plus vite que la Terre
+            vitesseRotation: 0.0669,  // = vitesseOrbite -> verrouillage gravitationnel
+            distanceOrbite: 1.5,      // distance visuelle Lune-Terre
+            vitesseOrbite: 0.0669,    // 0.005 × 365.25 / 27.32 jours
         });
     }
 }

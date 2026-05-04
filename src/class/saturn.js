@@ -9,10 +9,10 @@ export default class Saturne extends Astre {
       scene,
       texturePath: '/2k_saturn.jpg',
       rayon: 1.9,
-      vitesseRotation: 0.022,
+      vitesseRotation: 0.02222,  // 0.01 / 0.45 jours
       distanceOrbite: 25,
-      vitesseOrbite: 0.0017,
-      inclinaison: 26.7,
+      vitesseOrbite: 0.00017,   // 0.005 × 365.25 / 10759.2 jours
+      inclinaison: 26.73,
     });
   }
 

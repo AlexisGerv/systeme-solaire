@@ -8,10 +8,10 @@ export default class Venus extends Astre {
       // réellement depuis l'espace : la surface est invisible sous les nuages.
       texturePath: '/2k_venus_atmosphere.jpg',
       rayon: 0.95,
-      vitesseRotation: -0.001,  // rotation rétrograde (Vénus tourne à l'envers)
+      vitesseRotation: 0.0000412, // 0.01 / 243 jours ; positif = rétrograde car inclinaison > 90°
       distanceOrbite: 5.5,
-      vitesseOrbite: 0.008,
-      inclinaison: 177.4,       // axe quasi inversé -> rotation rétrograde
+      vitesseOrbite: 0.00813,   // 0.005 × 365.25 / 224.7 jours
+      inclinaison: 177.4,        // axe quasi inversé -> rotation rétrograde
     });
   }
 }

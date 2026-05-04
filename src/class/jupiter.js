@@ -8,10 +8,10 @@ export default class Jupiter extends Astre {
       // Échelle compressée : Jupiter fait en réalité ~11x la Terre, on garde
       // un ratio visible mais qui n'écrase pas les autres planètes.
       rayon: 2.2,
-      vitesseRotation: 0.025,   // rotation très rapide (~10h dans la réalité)
+      vitesseRotation: 0.02439,  // 0.01 / 0.41 jours
       distanceOrbite: 20,
-      vitesseOrbite: 0.0022,
-      inclinaison: 3.1,
+      vitesseOrbite: 0.000422,  // 0.005 × 365.25 / 4331.6 jours
+      inclinaison: 3.13,
     });
   }
 }

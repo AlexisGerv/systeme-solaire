@@ -10,7 +10,7 @@ export default class Terre extends Astre {
             vitesseRotation: 0.01,
             distanceOrbite: 8.5,
             vitesseOrbite: 0.005,
-            inclinaison: 23.5,  
+            inclinaison: 23.44,
         });
     }
     

@@ -63,11 +63,10 @@ kuiper.init();
 // On regroupe tous les astres pour pouvoir les mettre à jour en une seule boucle.
 const astres = [soleil, mercure, venus, terre, lune, mars, ceinture, jupiter, saturne, uranus, neptune, kuiper];
 
-// 4. Boucle d'animation : on met à jour chaque astre, puis on rend la scène
-function animate() {
-  requestAnimationFrame(animate);
+// 4. Boucle d'animation : setAnimationLoop est requis pour WebXR/VR.
+//    Il remplace requestAnimationFrame et s'arrête automatiquement quand
+//    la session XR se termine.
+espace.renderer.setAnimationLoop(() => {
   for (const astre of astres) astre.update();
   espace.render();
-}
-
-animate();
+});

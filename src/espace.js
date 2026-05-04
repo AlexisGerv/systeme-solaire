@@ -2,6 +2,7 @@ import * as THREE from 'three';
 // OrbitControls est un "addon" de three.js : un module à part qui ajoute
 // le contrôle de caméra à la souris (rotation, zoom, translation).
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { VRButton } from 'three/addons/webxr/VRButton.js';
 
 // La classe Espace possède l'unique scène, caméra et renderer.
 // Tous les astres (Soleil, Terre, Lune) viendront s'ajouter à cette scène.
@@ -29,8 +30,9 @@ export default class Espace {
       0.1,
       1000,
     );
-    // Recul suffisant pour voir tout le système (Neptune est à ~38 du Soleil).
-    this.camera.position.set(0, 25, 75);
+    // Vue depuis au-dessus du plan orbital (axe Y).
+    this.camera.position.set(0, 150, 0);
+    this.camera.lookAt(0, 0, 0);
 
     // 3. Le renderer : un seul <canvas> pour tout le monde
     this.renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -40,7 +42,11 @@ export default class Espace {
     // (un peu plus coûteux mais bien plus joli que les ombres "pixelisées").
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    // Activer le support WebXR (indispensable pour le mode VR).
+    this.renderer.xr.enabled = true;
     document.body.appendChild(this.renderer.domElement);
+    // Bouton "Enter VR" ajouté automatiquement par Three.js.
+    document.body.appendChild(VRButton.createButton(this.renderer));
 
     // 4. OrbitControls : permet de déplacer la caméra à la souris.
     //    - clic gauche + glisser : rotation autour du centre
