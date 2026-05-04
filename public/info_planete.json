@@ -1,0 +1,199 @@
+{
+  "sun": {
+    "radius": 696340,
+    "texture": "sun.jpg",
+    "rotation_period": 25.38
+  },
+  "mercury": {
+    "radius": 2439.7,
+    "distance": 57910,
+    "orbital_period": 88,
+    "texture": "mercury.jpg",
+    "rotation_period": 58.6,
+    "axial_tilt": 0.034,
+    "moons": []
+  },
+  "venus": {
+    "radius": 6051.8,
+    "distance": 108200,
+    "orbital_period": 224.7,
+    "texture": "venus.jpg",
+    "rotation_period": 243,
+    "axial_tilt": 177.4,
+    "moons": []
+  },
+  "earth": {
+    "radius": 6371,
+    "distance": 149600,
+    "orbital_period": 365.25,
+    "texture": "earth.jpg",
+    "rotation_period": 1,
+    "axial_tilt": 23.44,
+    "moons": [
+      {
+        "name": "Moon",
+        "distance": 384400,
+        "orbital_period": 27.32,
+        "rotation_period": 27.32
+      }
+    ]
+  },
+  "mars": {
+    "radius": 3389.5,
+    "distance": 227940,
+    "orbital_period": 687,
+    "texture": "mars.jpg",
+    "rotation_period": 1.03,
+    "axial_tilt": 25.19,
+    "moons": [
+      {
+        "name": "Phobos",
+        "distance": 9376,
+        "orbital_period": 0.319,
+        "rotation_period": 0.319
+      },
+      {
+        "name": "Deimos",
+        "distance": 23463,
+        "orbital_period": 1.263,
+        "rotation_period": 1.263
+      }
+    ]
+  },
+  "jupiter": {
+    "radius": 69911,
+    "distance": 778547,
+    "orbital_period": 4331.6,
+    "texture": "jupiter.jpg",
+    "rotation_period": 0.41,
+    "axial_tilt": 3.13,
+    "moons": [
+      {
+        "name": "Io",
+        "distance": 421700,
+        "orbital_period": 1.769,
+        "rotation_period": 1.769
+      },
+      {
+        "name": "Europa",
+        "distance": 671034,
+        "orbital_period": 3.551,
+        "rotation_period": 3.551
+      },
+      {
+        "name": "Ganymede",
+        "distance": 1070400,
+        "orbital_period": 7.155,
+        "rotation_period": 7.155
+      },
+      {
+        "name": "Callisto",
+        "distance": 1882700,
+        "orbital_period": 16.689,
+        "rotation_period": 16.689
+      }
+    ]
+  },
+  "saturn": {
+    "radius": 58232,
+    "distance": 1433449,
+    "orbital_period": 10759.2,
+    "texture": "saturn.jpg",
+    "rotation_period": 0.45,
+    "axial_tilt": 26.73,
+    "moons": [
+      {
+        "name": "Titan",
+        "distance": 1221870,
+        "orbital_period": 15.945,
+        "rotation_period": 15.945
+      },
+      {
+        "name": "Enceladus",
+        "distance": 237948,
+        "orbital_period": 1.37,
+        "rotation_period": 1.37
+      },
+      {
+        "name": "Mimas",
+        "distance": 185539,
+        "orbital_period": 0.942,
+        "rotation_period": 0.942
+      },
+      {
+        "name": "Rhea",
+        "distance": 527068,
+        "orbital_period": 4.518,
+        "rotation_period": 4.518
+      }
+    ]
+  },
+  "pluto": {
+    "radius": 1188.3,
+    "distance": 5906380,
+    "orbital_period": 90560,
+    "texture": "pluto.jpg",
+    "rotation_period": 6.39,
+    "axial_tilt": 119.6,
+    "moons": [
+      {
+        "name": "Charon",
+        "distance": 19591,
+        "orbital_period": 6.387,
+        "rotation_period": 6.387
+      },
+      {
+        "name": "Nix",
+        "distance": 48694,
+        "orbital_period": 24.854,
+        "rotation_period": null
+      },
+      {
+        "name": "Hydra",
+        "distance": 64738,
+        "orbital_period": 38.2,
+        "rotation_period": null
+      }
+    ]
+  },
+  "uranus": {
+    "radius": 25362,
+    "distance": 2870658,
+    "orbital_period": 30687.15,
+    "texture": "uranus.jpg",
+    "rotation_period": -0.72,
+    "axial_tilt": 97.77,
+    "moons": [
+      {
+        "name": "Miranda",
+        "distance": 129900,
+        "orbital_period": 1.41,
+        "rotation_period": 1.41
+      },
+      {
+        "name": "Ariel",
+        "distance": 190900,
+        "orbital_period": 2.52,
+        "rotation_period": 2.52
+      },
+      {
+        "name": "Umbriel",
+        "distance": 266000,
+        "orbital_period": 4.14,
+        "rotation_period": 4.14
+      },
+      {
+        "name": "Titania",
+        "distance": 435800,
+        "orbital_period": 8.71,
+        "rotation_period": 8.71
+      },
+      {
+        "name": "Oberon",
+        "distance": 583500,
+        "orbital_period": 13.46,
+        "rotation_period": 13.46
+      }
+    ]
+  }
+}
