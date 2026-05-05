@@ -9,8 +9,10 @@ export default class Terre extends Astre {
             rayon: 1,
             vitesseRotation: 0.01,
             distanceOrbite: 8.5,
-            vitesseOrbite: 0.005,
-            inclinaison: 23.44,
+            vitesseOrbite: 0.005,      // 365.25 jours
+            inclinaison: 23.5,
+            nom: "Terre",
+            info: "Notre planète bleue."
         });
     }
     
