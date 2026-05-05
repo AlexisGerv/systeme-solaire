@@ -14,6 +14,7 @@ export default class Lune extends Astre {
             vitesseRotation: 0.0669,  // = vitesseOrbite -> verrouillage gravitationnel
             distanceOrbite: 1.5,      // distance visuelle Lune-Terre
             vitesseOrbite: 0.0669,    // 0.005 × 365.25 / 27.32 jours
+            castShadow: true,
         });
     }
 }

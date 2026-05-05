@@ -10,8 +10,8 @@ import * as THREE from 'three';
 export default class CeintureAsteroides {
   constructor(scene, {
     nombre = 1500,
-    rayonMin = 13.5,
-    rayonMax = 16,
+    rayonMin = 14,
+    rayonMax = 18,
     epaisseur = 0.3,
     tailleMin = 0.02,
     tailleMax = 0.1,
@@ -77,7 +77,7 @@ export default class CeintureAsteroides {
     this.pivot.add(this.mesh);
   }
 
-  update() {
-    this.pivot.rotation.y += this.vitesseOrbite;
+  update(timeScale = 1) {
+    this.pivot.rotation.y += this.vitesseOrbite * timeScale;
   }
 }
