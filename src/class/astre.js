@@ -22,6 +22,7 @@ export default class Astre {
     vitesseOrbite = 0,
     emissif = false,           // true = brille seul (Soleil) ; false = éclairé (Terre, Lune)
     inclinaison = 0,           // inclinaison de l'axe en degrés (Terre : 23.5°)
+    ombre = true,              // false = n'utilise pas la shadow map (utile pour les nombreuses petites lunes)
   }) {
     // On garde les paramètres pour les utiliser dans init() et update()
     this.scene = scene;
@@ -33,6 +34,7 @@ export default class Astre {
     this.vitesseOrbite = vitesseOrbite;
     this.emissif = emissif;
     this.inclinaison = inclinaison;
+    this.ombre = ombre;
   }
 
   init() {
@@ -77,10 +79,12 @@ export default class Astre {
     //    Sa rotation propre se fait autour de son axe Y local incliné.
     this.mesh = new THREE.Mesh(geometry, material);
 
-    // Ombres : seuls les astres NON émissifs participent.
+    // Ombres : seuls les astres NON émissifs participent. On peut aussi
+    // les désactiver explicitement (ex: dizaines de petites lunes) pour
+    // épargner la shadow map.
     //  - castShadow    : l'astre projette une ombre sur les autres
     //  - receiveShadow : la surface peut être assombrie par d'autres astres
-    if (!this.emissif) {
+    if (!this.emissif && this.ombre) {
       this.mesh.castShadow = true;
       this.mesh.receiveShadow = true;
     }

@@ -69,6 +69,30 @@
     "axial_tilt": 3.13,
     "moons": [
       {
+        "name": "Metis",
+        "distance": 128000,
+        "orbital_period": 0.295,
+        "rotation_period": 0.295
+      },
+      {
+        "name": "Adrastea",
+        "distance": 129000,
+        "orbital_period": 0.298,
+        "rotation_period": 0.298
+      },
+      {
+        "name": "Amalthea",
+        "distance": 181366,
+        "orbital_period": 0.498,
+        "rotation_period": 0.498
+      },
+      {
+        "name": "Thebe",
+        "distance": 221889,
+        "orbital_period": 0.675,
+        "rotation_period": 0.675
+      },
+      {
         "name": "Io",
         "distance": 421700,
         "orbital_period": 1.769,
@@ -91,6 +115,60 @@
         "distance": 1882700,
         "orbital_period": 16.689,
         "rotation_period": 16.689
+      },
+      {
+        "name": "Themisto",
+        "distance": 7393216,
+        "orbital_period": 130.02,
+        "rotation_period": null
+      },
+      {
+        "name": "Leda",
+        "distance": 11165000,
+        "orbital_period": 240.92,
+        "rotation_period": null
+      },
+      {
+        "name": "Himalia",
+        "distance": 11461000,
+        "orbital_period": 250.56,
+        "rotation_period": 0.4
+      },
+      {
+        "name": "Lysithea",
+        "distance": 11717000,
+        "orbital_period": 259.2,
+        "rotation_period": null
+      },
+      {
+        "name": "Elara",
+        "distance": 11741000,
+        "orbital_period": 259.64,
+        "rotation_period": 0.5
+      },
+      {
+        "name": "Ananke",
+        "distance": 21276000,
+        "orbital_period": -629.77,
+        "rotation_period": null
+      },
+      {
+        "name": "Carme",
+        "distance": 23404000,
+        "orbital_period": -734.17,
+        "rotation_period": null
+      },
+      {
+        "name": "Pasiphae",
+        "distance": 23624000,
+        "orbital_period": -743.63,
+        "rotation_period": null
+      },
+      {
+        "name": "Sinope",
+        "distance": 23939000,
+        "orbital_period": -758.9,
+        "rotation_period": null
       }
     ]
   },
@@ -103,16 +181,46 @@
     "axial_tilt": 26.73,
     "moons": [
       {
-        "name": "Titan",
-        "distance": 1221870,
-        "orbital_period": 15.945,
-        "rotation_period": 15.945
+        "name": "Pan",
+        "distance": 133584,
+        "orbital_period": 0.575,
+        "rotation_period": 0.575
       },
       {
-        "name": "Enceladus",
-        "distance": 237948,
-        "orbital_period": 1.37,
-        "rotation_period": 1.37
+        "name": "Daphnis",
+        "distance": 136505,
+        "orbital_period": 0.594,
+        "rotation_period": 0.594
+      },
+      {
+        "name": "Atlas",
+        "distance": 137670,
+        "orbital_period": 0.602,
+        "rotation_period": 0.602
+      },
+      {
+        "name": "Prometheus",
+        "distance": 139380,
+        "orbital_period": 0.613,
+        "rotation_period": 0.613
+      },
+      {
+        "name": "Pandora",
+        "distance": 141720,
+        "orbital_period": 0.629,
+        "rotation_period": 0.629
+      },
+      {
+        "name": "Epimetheus",
+        "distance": 151422,
+        "orbital_period": 0.694,
+        "rotation_period": 0.694
+      },
+      {
+        "name": "Janus",
+        "distance": 151472,
+        "orbital_period": 0.695,
+        "rotation_period": 0.695
       },
       {
         "name": "Mimas",
@@ -121,10 +229,70 @@
         "rotation_period": 0.942
       },
       {
+        "name": "Enceladus",
+        "distance": 237948,
+        "orbital_period": 1.37,
+        "rotation_period": 1.37
+      },
+      {
+        "name": "Tethys",
+        "distance": 294619,
+        "orbital_period": 1.888,
+        "rotation_period": 1.888
+      },
+      {
+        "name": "Telesto",
+        "distance": 294619,
+        "orbital_period": 1.888,
+        "rotation_period": 1.888
+      },
+      {
+        "name": "Calypso",
+        "distance": 294619,
+        "orbital_period": 1.888,
+        "rotation_period": 1.888
+      },
+      {
+        "name": "Dione",
+        "distance": 377396,
+        "orbital_period": 2.737,
+        "rotation_period": 2.737
+      },
+      {
+        "name": "Helene",
+        "distance": 377396,
+        "orbital_period": 2.737,
+        "rotation_period": 2.737
+      },
+      {
         "name": "Rhea",
         "distance": 527068,
         "orbital_period": 4.518,
         "rotation_period": 4.518
+      },
+      {
+        "name": "Titan",
+        "distance": 1221870,
+        "orbital_period": 15.945,
+        "rotation_period": 15.945
+      },
+      {
+        "name": "Hyperion",
+        "distance": 1481009,
+        "orbital_period": 21.276,
+        "rotation_period": null
+      },
+      {
+        "name": "Iapetus",
+        "distance": 3560820,
+        "orbital_period": 79.32,
+        "rotation_period": 79.32
+      },
+      {
+        "name": "Phoebe",
+        "distance": 12944300,
+        "orbital_period": -550.31,
+        "rotation_period": 0.4
       }
     ]
   },

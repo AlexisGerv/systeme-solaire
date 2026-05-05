@@ -7,7 +7,7 @@ export default class Neptune extends Astre {
       texturePath: '/2k_neptune.jpg',
       rayon: 1.35,
       vitesseRotation: 0.01493,  // 0.01 / 0.6713 jours
-      distanceOrbite: 38,
+      distanceOrbite: 50,
       vitesseOrbite: 0.0000304, // 0.005 × 365.25 / 60190 jours
       inclinaison: 28.32,
     });
