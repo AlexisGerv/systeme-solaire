@@ -136,9 +136,6 @@ const lunesJupiter = ajouterLunes(infoPlanetes.jupiter, jupiter, 2.6, 4.5);
 const lunesSaturne = ajouterLunes(infoPlanetes.saturn, saturne, 4.5, 6.5);
 
 // On regroupe tous les astres pour pouvoir les mettre à jour en une seule boucle.
-<<<<<<< HEAD
-const astres = [soleil, mercure, venus, terre, lune, mars, ceinture, jupiter, saturne, uranus, neptune, kuiper, ...lunesJupiter, ...lunesSaturne];
-=======
 const astres = [soleil, mercure, venus, terre, lune, mars, ceinture, jupiter, io, europa, ganymede, callisto, saturne, titan, enceladus, mimas, rhea, uranus, neptune, kuiper];
 
 // Configuration du raycaster et de l'interaction VR
@@ -240,7 +237,6 @@ function handleVRInput() {
     }
   }
 }
->>>>>>> a458c6cf3c58e8565c6530246af2ea3e9b86aef4
 
 // 4. Boucle d'animation : setAnimationLoop est requis pour WebXR/VR.
 //    Il remplace requestAnimationFrame et s'arrête automatiquement quand
