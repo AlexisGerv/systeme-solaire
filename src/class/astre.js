@@ -22,6 +22,10 @@ export default class Astre {
     vitesseOrbite = 0,
     emissif = false,           // true = brille seul (Soleil) ; false = éclairé (Terre, Lune)
     inclinaison = 0,           // inclinaison de l'axe en degrés (Terre : 23.5°)
+    castShadow = false,        // par défaut, les planètes ne projettent pas d'ombre
+    receiveShadow = true,      // mais elles peuvent en recevoir (éclipses)
+    nom = "Inconnu",
+    info = "Pas d'information disponible",
   }) {
     // On garde les paramètres pour les utiliser dans init() et update()
     this.scene = scene;
@@ -33,6 +37,10 @@ export default class Astre {
     this.vitesseOrbite = vitesseOrbite;
     this.emissif = emissif;
     this.inclinaison = inclinaison;
+    this.castShadow = castShadow;
+    this.receiveShadow = receiveShadow;
+    this.nom = nom;
+    this.info = info;
   }
 
   init() {
@@ -76,20 +84,19 @@ export default class Astre {
     // 6. Le mesh : ajouté au tilt (à la bonne position et incliné).
     //    Sa rotation propre se fait autour de son axe Y local incliné.
     this.mesh = new THREE.Mesh(geometry, material);
+    this.mesh.userData = { astre: this };
 
     // Ombres : seuls les astres NON émissifs participent.
-    //  - castShadow    : l'astre projette une ombre sur les autres
-    //  - receiveShadow : la surface peut être assombrie par d'autres astres
     if (!this.emissif) {
-      this.mesh.castShadow = true;
-      this.mesh.receiveShadow = true;
+      this.mesh.castShadow = this.castShadow;
+      this.mesh.receiveShadow = this.receiveShadow;
     }
 
     this.tilt.add(this.mesh);
   }
 
-  update() {
-    this.mesh.rotation.y += this.vitesseRotation; // rotation sur soi
-    this.pivot.rotation.y += this.vitesseOrbite;  // orbite (sans effet si vitesseOrbite = 0)
+  update(timeScale = 1) {
+    this.mesh.rotation.y += this.vitesseRotation * timeScale; // rotation sur soi
+    this.pivot.rotation.y += this.vitesseOrbite * timeScale;  // orbite (sans effet si vitesseOrbite = 0)
   }
 }
