@@ -7,11 +7,7 @@ export default class Uranus extends Astre {
       texturePath: '/2k_uranus.jpg',
       rayon: 1.4,
       vitesseRotation: 0.01389,  // 0.01 / 0.72 jours
-<<<<<<< HEAD
       distanceOrbite: 44,
-=======
-      distanceOrbite: 60,
->>>>>>> a458c6cf3c58e8565c6530246af2ea3e9b86aef4
       vitesseOrbite: 0.0000595, // 0.005 × 365.25 / 30687.15 jours
       inclinaison: 97.77,        // axe quasi couché -> Uranus "roule" sur son orbite
     });

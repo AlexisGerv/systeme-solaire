@@ -22,14 +22,9 @@ export default class Astre {
     vitesseOrbite = 0,
     emissif = false,           // true = brille seul (Soleil) ; false = éclairé (Terre, Lune)
     inclinaison = 0,           // inclinaison de l'axe en degrés (Terre : 23.5°)
-<<<<<<< HEAD
     ombre = true,              // false = n'utilise pas la shadow map (utile pour les nombreuses petites lunes)
-=======
-    castShadow = false,        // par défaut, les planètes ne projettent pas d'ombre
-    receiveShadow = true,      // mais elles peuvent en recevoir (éclipses)
     nom = "Inconnu",
     info = "Pas d'information disponible",
->>>>>>> a458c6cf3c58e8565c6530246af2ea3e9b86aef4
   }) {
     // On garde les paramètres pour les utiliser dans init() et update()
     this.scene = scene;
@@ -41,14 +36,9 @@ export default class Astre {
     this.vitesseOrbite = vitesseOrbite;
     this.emissif = emissif;
     this.inclinaison = inclinaison;
-<<<<<<< HEAD
     this.ombre = ombre;
-=======
-    this.castShadow = castShadow;
-    this.receiveShadow = receiveShadow;
     this.nom = nom;
     this.info = info;
->>>>>>> a458c6cf3c58e8565c6530246af2ea3e9b86aef4
   }
 
   init() {
@@ -94,21 +84,12 @@ export default class Astre {
     this.mesh = new THREE.Mesh(geometry, material);
     this.mesh.userData = { astre: this };
 
-<<<<<<< HEAD
     // Ombres : seuls les astres NON émissifs participent. On peut aussi
     // les désactiver explicitement (ex: dizaines de petites lunes) pour
     // épargner la shadow map.
-    //  - castShadow    : l'astre projette une ombre sur les autres
-    //  - receiveShadow : la surface peut être assombrie par d'autres astres
     if (!this.emissif && this.ombre) {
       this.mesh.castShadow = true;
       this.mesh.receiveShadow = true;
-=======
-    // Ombres : seuls les astres NON émissifs participent.
-    if (!this.emissif) {
-      this.mesh.castShadow = this.castShadow;
-      this.mesh.receiveShadow = this.receiveShadow;
->>>>>>> a458c6cf3c58e8565c6530246af2ea3e9b86aef4
     }
 
     this.tilt.add(this.mesh);
