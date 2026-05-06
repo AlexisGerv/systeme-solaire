@@ -13,6 +13,7 @@ import CeintureAsteroides from './class/asteroid_belt.js';
 import CeintureKuiper from './class/kuiper_belt.js';
 import Satellite from './class/satellite.js';
 import InfoBubble from './class/info_bubble.js';
+import HUD from './class/hud.js';
 import CameraController from './camera_controller.js';
 import './style.css';
 
@@ -86,7 +87,10 @@ const astres = [soleil, mercure, venus, terre, lune, mars, ceinture, jupiter, io
 
 // Toute la logique manettes / sélection / suivi / input VR vit dans CameraController.
 const infoBubble = new InfoBubble(espace.scene);
-const cameraController = new CameraController(espace, astres, infoBubble);
+// HUD attaché à la caméra (visible uniquement en VR/à travers la caméra) :
+// affiche l'astre suivi, la vitesse, et l'aide-mémoire des boutons A/B.
+const hud = new HUD(espace.camera);
+const cameraController = new CameraController(espace, astres, infoBubble, hud);
 
 // UI 2D : slider HTML <-> timeScale du contrôleur, dans les deux sens.
 const speedSlider = document.getElementById('speed-slider');
@@ -100,11 +104,19 @@ if (speedSlider && speedValue) {
   });
 }
 
-// Le joystick VR appelle ce callback : on synchronise l'UI HTML.
+// Le joystick VR appelle ce callback : on synchronise l'UI HTML + le HUD VR.
 cameraController.onTimeScaleChange = (v) => {
   if (speedSlider) speedSlider.value = v;
   if (speedValue) speedValue.textContent = v.toFixed(2) + 'x';
+  hud.setSpeed(v);
 };
+
+// Le slider HTML doit aussi mettre à jour le HUD VR.
+if (speedSlider) {
+  speedSlider.addEventListener('input', (e) => {
+    hud.setSpeed(parseFloat(e.target.value));
+  });
+}
 
 // 4. Boucle d'animation : setAnimationLoop est requis pour WebXR/VR.
 //    Il remplace requestAnimationFrame et s'arrête automatiquement quand
