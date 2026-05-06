@@ -10,6 +10,8 @@ export default class Neptune extends Astre {
       distanceOrbite: 70,
       vitesseOrbite: 0.0000304, // 0.005 × 365.25 / 60190 jours
       inclinaison: 28.32,
+      nom: "Neptune",
+      info: "La planète la plus éloignée du Soleil, une géante gazeuse avec des vents violents et une grande tache sombre, une tempête similaire à la Grande Tache Rouge de Jupiter."
     });
   }
 }

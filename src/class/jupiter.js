@@ -12,6 +12,8 @@ export default class Jupiter extends Astre {
       distanceOrbite: 26,
       vitesseOrbite: 0.000422,  // 0.005 × 365.25 / 4331.6 jours
       inclinaison: 3.13,
+      nom: "Jupiter",
+      info: "La plus grosse planète du système solaire, une géante gazeuse avec une célèbre Grande Tache Rouge, une tempête plus grande que la Terre."
     });
   }
 }

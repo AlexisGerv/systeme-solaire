@@ -10,6 +10,8 @@ export default class Uranus extends Astre {
       distanceOrbite: 60,
       vitesseOrbite: 0.0000595, // 0.005 × 365.25 / 30687.15 jours
       inclinaison: 97.77,        // axe quasi couché -> Uranus "roule" sur son orbite
+      nom: "Uranus",
+      info: "Une géante gazeuse avec une couleur bleu-vert due au méthane dans son atmosphère, et une inclinaison extrême qui fait que ses pôles sont presque dans le plan de son orbite."
     });
   }
 }

@@ -1,4 +1,3 @@
-import * as THREE from 'three';
 import Espace from './espace.js';
 import Soleil from './class/sun.js';
 import Mercure from './class/mercury.js';
@@ -14,6 +13,7 @@ import CeintureAsteroides from './class/asteroid_belt.js';
 import CeintureKuiper from './class/kuiper_belt.js';
 import Satellite from './class/satellite.js';
 import InfoBubble from './class/info_bubble.js';
+import CameraController from './camera_controller.js';
 import './style.css';
 
 // 1. On crée l'espace : il possède la scène, la caméra et le renderer
@@ -84,127 +84,34 @@ kuiper.init();
 // On regroupe tous les astres pour pouvoir les mettre à jour en une seule boucle.
 const astres = [soleil, mercure, venus, terre, lune, mars, ceinture, jupiter, io, europa, ganymede, callisto, saturne, titan, enceladus, mimas, rhea, uranus, neptune, kuiper];
 
-// Configuration du raycaster et de l'interaction VR
-const raycaster = new THREE.Raycaster();
+// Toute la logique manettes / sélection / suivi / input VR vit dans CameraController.
 const infoBubble = new InfoBubble(espace.scene);
-let trackedAstre = null; // L'astre actuellement suivi en VR
+const cameraController = new CameraController(espace, astres, infoBubble);
 
-const controller1 = espace.renderer.xr.getController(0);
-const controller2 = espace.renderer.xr.getController(1);
-
-// Géométrie pour le rayon du contrôleur
-const rayGeometry = new THREE.BufferGeometry().setFromPoints([
-  new THREE.Vector3(0, 0, 0),
-  new THREE.Vector3(0, 0, -100)
-]);
-const rayMaterial = new THREE.LineBasicMaterial({ color: 0x00ff00 });
-
-if (controller1) {
-  const line = new THREE.Line(rayGeometry, rayMaterial);
-  line.name = 'line';
-  controller1.add(line);
-  espace.scene.add(controller1);
-  controller1.addEventListener('select', onSelect);
-}
-
-if (controller2) {
-  const line = new THREE.Line(rayGeometry, rayMaterial);
-  line.name = 'line';
-  controller2.add(line);
-  espace.scene.add(controller2);
-  controller2.addEventListener('select', onSelect);
-}
-
-function onSelect(event) {
-  const controller = event.target;
-  const tempMatrix = new THREE.Matrix4();
-  tempMatrix.identity().extractRotation(controller.matrixWorld);
-  
-  raycaster.ray.origin.setFromMatrixPosition(controller.matrixWorld);
-  raycaster.ray.direction.set(0, 0, -1).applyMatrix4(tempMatrix);
-
-  // Chercher les intersections avec les meshes de tous les astres
-  const meshes = astres.map(a => a.mesh).filter(m => m !== undefined);
-  const intersects = raycaster.intersectObjects(meshes, false);
-
-  if (intersects.length > 0) {
-    const object = intersects[0].object;
-    // Retrouver l'instance d'Astre via userData
-    if (object.userData && object.userData.astre) {
-      trackedAstre = object.userData.astre;
-      infoBubble.show(trackedAstre);
-      
-      // Mettre la couleur de la ligne en rouge lors d'une sélection
-      const line = controller.getObjectByName('line');
-      if (line) line.material.color.set(0xff0000);
-      
-      setTimeout(() => {
-        if (line) line.material.color.set(0x00ff00);
-      }, 300);
-    }
-  } else {
-    // Clic dans le vide = annuler le tracking
-    trackedAstre = null;
-    infoBubble.hide();
-  }
-}
-
-// Gestion de la vitesse de simulation
-let timeScale = 1;
+// UI 2D : slider HTML <-> timeScale du contrôleur, dans les deux sens.
 const speedSlider = document.getElementById('speed-slider');
 const speedValue = document.getElementById('speed-value');
 
 if (speedSlider && speedValue) {
   speedSlider.addEventListener('input', (e) => {
-    timeScale = parseFloat(e.target.value);
-    speedValue.textContent = timeScale.toFixed(2) + 'x';
+    const v = parseFloat(e.target.value);
+    cameraController.setTimeScale(v);
+    speedValue.textContent = v.toFixed(2) + 'x';
   });
 }
 
-function handleVRInput() {
-  const session = espace.renderer.xr.getSession();
-  if (session) {
-    for (const source of session.inputSources) {
-      // Vérifier si la manette possède un joystick (axes)
-      if (source.gamepad && source.gamepad.axes.length >= 4) {
-        // L'axe 3 correspond généralement au Y du joystick principal (Oculus, etc.)
-        const yAxis = source.gamepad.axes[3];
-        // Zone morte (deadzone) pour éviter les modifications accidentelles
-        if (Math.abs(yAxis) > 0.1) {
-          // Pousser en avant donne une valeur négative -> on augmente la vitesse
-          timeScale -= yAxis * 0.02;
-          timeScale = Math.max(0, Math.min(2, timeScale));
-          
-          // Mettre à jour l'UI 2D en temps réel
-          if (speedSlider) speedSlider.value = timeScale;
-          if (speedValue) speedValue.textContent = timeScale.toFixed(2) + 'x';
-        }
-      }
-    }
-  }
-}
+// Le joystick VR appelle ce callback : on synchronise l'UI HTML.
+cameraController.onTimeScaleChange = (v) => {
+  if (speedSlider) speedSlider.value = v;
+  if (speedValue) speedValue.textContent = v.toFixed(2) + 'x';
+};
 
 // 4. Boucle d'animation : setAnimationLoop est requis pour WebXR/VR.
 //    Il remplace requestAnimationFrame et s'arrête automatiquement quand
 //    la session XR se termine.
 espace.renderer.setAnimationLoop(() => {
-  handleVRInput();
-  
-  for (const astre of astres) astre.update(timeScale);
-  
-  // Si on track un astre, déplacer le rig de la caméra
-  if (trackedAstre) {
-    const pos = new THREE.Vector3();
-    trackedAstre.mesh.getWorldPosition(pos);
-    
-    // Décaler un peu le rig pour ne pas être DANS la planète
-    const decalage = Math.max(10, trackedAstre.rayon * 3);
-    pos.z += decalage; // Positionner devant
-    
-    // Lerp pour un déplacement fluide (anti motion-sickness)
-    espace.rig.position.lerp(pos, 0.05);
-  }
-  
+  cameraController.update();
+  for (const astre of astres) astre.update(cameraController.timeScale);
   infoBubble.update();
   espace.render();
 });
