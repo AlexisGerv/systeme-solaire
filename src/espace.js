@@ -33,9 +33,14 @@ export default class Espace {
     this.scene.add(this.rig);
     this.rig.add(this.camera);
     
-    // Vue depuis au-dessus du plan orbital (axe Y).
-    this.camera.position.set(0, 150, 0); // La caméra est en hauteur par rapport au rig
-    this.camera.lookAt(0, 0, 0); // Regarder vers le centre du rig
+    // Vue d'arrivée : on apparaît juste à l'extérieur de la ceinture
+    // de Kuiper (rayon 80-100, cf. kuiper_belt.js), légèrement au-dessus
+    // du plan orbital, pour donner l'impression de venir d'ailleurs et
+    // de découvrir le système solaire de loin.
+    // En VR, c'est le rig qu'on téléporte (cf. CameraController), parce
+    // que la position de la caméra est écrasée par la pose du casque.
+    this.camera.position.set(0, 30, 120);
+    this.camera.lookAt(0, 0, 0); // Regarder vers le Soleil
 
     // 3. Le renderer : un seul <canvas> pour tout le monde
     this.renderer = new THREE.WebGLRenderer({ antialias: true });

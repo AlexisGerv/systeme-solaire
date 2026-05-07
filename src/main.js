@@ -14,6 +14,7 @@ import CeintureKuiper from './class/kuiper_belt.js';
 import Satellite from './class/satellite.js';
 import InfoBubble from './class/info_bubble.js';
 import HUD from './class/hud.js';
+import VRTutorial from './class/vr_tutorial.js';
 import CameraController from './camera_controller.js';
 import './style.css';
 
@@ -90,7 +91,9 @@ const infoBubble = new InfoBubble(espace.scene);
 // HUD attaché à la caméra (visible uniquement en VR/à travers la caméra) :
 // affiche l'astre suivi, la vitesse, et l'aide-mémoire des boutons A/B.
 const hud = new HUD(espace.camera);
-const cameraController = new CameraController(espace, astres, infoBubble, hud);
+// Panneau d'aide VR : affiché à l'entrée en session, fermé à la gâchette.
+const vrTutorial = new VRTutorial(espace.scene);
+const cameraController = new CameraController(espace, astres, infoBubble, hud, vrTutorial);
 
 // UI 2D : slider HTML <-> timeScale du contrôleur, dans les deux sens.
 const speedSlider = document.getElementById('speed-slider');
