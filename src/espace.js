@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { VRButton } from 'three/addons/webxr/VRButton.js';
+import { ECHELLE } from './class/astre.js';
 
 // La classe Espace possède l'unique scène, caméra et renderer.
 // Tous les astres (Soleil, Terre, Lune) viendront s'ajouter à cette scène.
@@ -21,11 +22,13 @@ export default class Espace {
     const ambiante = new THREE.AmbientLight(0xffffff, 0.08);
     this.scene.add(ambiante);
 
+    // Far plane mis à l'échelle aussi : sinon Neptune et la ceinture de Kuiper
+    // disparaissent au-delà de la frustum quand le système est agrandi.
     this.camera = new THREE.PerspectiveCamera(
       60,
       window.innerWidth / window.innerHeight,
       0.1,
-      1000,
+      1000 * ECHELLE,
     );
     // On met la caméra dans un "rig" pour pouvoir la déplacer en VR et PC.
     this.rig = new THREE.Group();
@@ -39,7 +42,7 @@ export default class Espace {
     // de découvrir le système solaire de loin.
     // En VR, c'est le rig qu'on téléporte (cf. CameraController), parce
     // que la position de la caméra est écrasée par la pose du casque.
-    this.camera.position.set(0, 30, 120);
+    this.camera.position.set(0, 30 * ECHELLE, 120 * ECHELLE);
     this.camera.lookAt(0, 0, 0); // Regarder vers le Soleil
 
     // 3. Le renderer : un seul <canvas> pour tout le monde
@@ -66,8 +69,8 @@ export default class Espace {
     // Si activé, il faut appeler controls.update() à chaque frame (voir render()).
     this.controls.enableDamping = true;
     // Bornes de zoom pour éviter de partir trop loin ou de rentrer dans le Soleil.
-    this.controls.minDistance = 3;
-    this.controls.maxDistance = 250;
+    this.controls.minDistance = 3 * ECHELLE;
+    this.controls.maxDistance = 250 * ECHELLE;
 
     // 5. Garder un rendu correct si la fenêtre est redimensionnée
     window.addEventListener('resize', () => {

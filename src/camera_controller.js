@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { ECHELLE } from './class/astre.js';
 
 // Gère tout ce qui concerne la caméra et les manettes VR :
 //  - création des contrôleurs WebXR (avec rayon laser visible, portée courte)
@@ -18,7 +19,10 @@ import * as THREE from 'three';
 //   Bouton A (droit) -> timeScale +
 //   Bouton B (droit) -> timeScale -
 //   Gâchette        -> sélection au laser (raycast 30u)
-const PORTEE_RAYCASTER = 30;
+// Portée du raycaster mise à l'échelle : avec un système agrandi, on doit
+// pouvoir viser une planète d'un peu plus loin sans pour autant rendre la
+// sélection trop facile depuis le Soleil.
+const PORTEE_RAYCASTER = 30 * ECHELLE;
 const DEADZONE_STICK = 0.15;
 
 export default class CameraController {
@@ -87,7 +91,7 @@ export default class CameraController {
       // pose du casque en XR, on doit déplacer le rig (pas la caméra).
       // L'orientation par défaut du casque est -Z, donc avec un rig à
       // z=+120 le regard pointe naturellement vers le Soleil au centre.
-      this.espace.rig.position.set(0, 30, 120);
+      this.espace.rig.position.set(0, 30 * ECHELLE, 120 * ECHELLE);
       this.espace.rig.rotation.set(0, 0, 0);
       // Réinitialise aussi l'état de suivi : pas d'astre tracké au
       // démarrage, sinon le rig serait happé vers la dernière sélection.
@@ -220,7 +224,9 @@ export default class CameraController {
     // Vitesse de translation : adaptative selon la distance au Soleil
     // pour ne pas mettre une éternité à atteindre Neptune (~150u).
     const distAuCentre = rig.position.length();
-    const vitesseTrans = Math.max(8, distAuCentre * 0.4); // unités/sec
+    // Plancher de vitesse mis à l'échelle pour rester réactif près du Soleil
+    // (le terme proportionnel à la distance se met déjà à l'échelle tout seul).
+    const vitesseTrans = Math.max(8 * ECHELLE, distAuCentre * 0.4); // unités/sec
     const vitesseRot = 1.5; // rad/sec
 
     let bougeManuellement = false;
@@ -376,7 +382,7 @@ export default class CameraController {
       //    L'effet se coupe dès qu'on est arrivé OU dès que l'utilisateur
       //    prend la main au stick gauche.
       if (this._approcheInitiale && !bougeManuellement && this._dirApproche) {
-        const decalage = Math.max(10, this.trackedAstre.rayon * 3);
+        const decalage = Math.max(10 * ECHELLE, this.trackedAstre.rayon * 3);
         // cible = planet - decalage * dirApproche
         // À cible, en regardant dans dirApproche, la planète est à 'decalage' devant.
         const cible = posAstre.clone().addScaledVector(this._dirApproche, -decalage);

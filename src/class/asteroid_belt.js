@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { ECHELLE } from './astre.js';
 
 // Ceinture d'astéroïdes entre Mars et Jupiter.
 //
@@ -18,13 +19,15 @@ export default class CeintureAsteroides {
     vitesseOrbite = 0.0032, // entre celle de Mars (0.004) et Jupiter (0.0022)
     couleur = 0x8a7560,
   } = {}) {
+    // Toutes les dimensions spatiales (rayons, épaisseur, taille des cailloux)
+    // sont mises à l'échelle globale, comme pour les astres.
     this.scene = scene;
     this.nombre = nombre;
-    this.rayonMin = rayonMin;
-    this.rayonMax = rayonMax;
-    this.epaisseur = epaisseur;
-    this.tailleMin = tailleMin;
-    this.tailleMax = tailleMax;
+    this.rayonMin = rayonMin * ECHELLE;
+    this.rayonMax = rayonMax * ECHELLE;
+    this.epaisseur = epaisseur * ECHELLE;
+    this.tailleMin = tailleMin * ECHELLE;
+    this.tailleMax = tailleMax * ECHELLE;
     this.vitesseOrbite = vitesseOrbite;
     this.couleur = couleur;
   }

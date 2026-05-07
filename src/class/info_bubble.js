@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { ECHELLE } from './astre.js';
 
 export default class InfoBubble {
   constructor(scene) {
@@ -15,7 +16,8 @@ export default class InfoBubble {
     const material = new THREE.SpriteMaterial({ map: this.texture, depthTest: false });
     
     this.sprite = new THREE.Sprite(material);
-    this.sprite.scale.set(10, 5, 1);
+    // Taille mise à l'échelle pour rester lisible à côté des astres agrandis.
+    this.sprite.scale.set(10 * ECHELLE, 5 * ECHELLE, 1);
     this.sprite.visible = false;
     
     // On met un renderOrder grand pour qu'il s'affiche par-dessus
@@ -79,8 +81,11 @@ export default class InfoBubble {
       this.targetAstre.mesh.getWorldPosition(pos);
       this.sprite.position.copy(pos);
       
-      // Ajuster la position selon la taille de l'astre
-      const offset = Math.max(5, this.targetAstre.rayon * 1.5 + 2);
+      // Ajuster la position selon la taille de l'astre. Le terme rayon * 1.5
+      // se met déjà à l'échelle tout seul (rayon est mis à l'échelle dans Astre) ;
+      // on ne met à l'échelle que le plancher et l'offset constant pour les
+      // tout petits satellites.
+      const offset = Math.max(5 * ECHELLE, this.targetAstre.rayon * 1.5 + 2 * ECHELLE);
       this.sprite.position.y += offset;
     }
   }
