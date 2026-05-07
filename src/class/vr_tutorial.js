@@ -74,9 +74,9 @@ export default class VRTutorial {
 
     // Liste des contrôles : couple (libellé manette, action).
     const controles = [
-      ['Stick gauche', 'Avancer / reculer / strafe latéral'],
-      ['Stick droit (X)', 'Tourner sur soi (yaw)'],
-      ['Stick droit (Y)', 'Monter / descendre'],
+      ['Stick gauche', 'Avancer / reculer / mouvements latéraux'],
+      ['Stick droit (⬅⮕)', 'Tourner sur soi même'],
+      ['Stick droit (⬆⬇)', 'Monter / descendre'],
       ['Bouton A', 'Accélérer le temps'],
       ['Bouton B', 'Ralentir le temps'],
       ['Gâchette', 'Sélectionner un astre au laser'],
