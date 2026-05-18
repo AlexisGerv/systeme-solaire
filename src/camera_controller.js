@@ -216,121 +216,144 @@ export default class CameraController {
     }
   }
 
+  // Calcule les vecteurs forward et right (droite) de la caméra en coordonnées monde.
+  // Right = forward × up, avec un cas limite pour quand la caméra regarde droit haut/bas.
+  _calculerVecteursCaméra() {
+    const camera = this.espace.camera;
+    const forward = new THREE.Vector3();
+    camera.getWorldDirection(forward);
+
+    const right = new THREE.Vector3();
+    right.crossVectors(forward, new THREE.Vector3(0, 1, 0));
+    if (right.lengthSq() < 1e-6) {
+      right.set(1, 0, 0);
+    } else {
+      right.normalize();
+    }
+
+    return { forward, right };
+  }
+
+  // Vitesse de translation adaptée à la distance au Soleil.
+  // Près du Soleil : vitesse plancher pour rester réactif.
+  // Loin du Soleil : vitesse augmente avec la distance (40% de distance/sec).
+  _calculerVitesseTranslation() {
+    const distAuCentre = this.espace.rig.position.length();
+    return Math.max(8 * ECHELLE, distAuCentre * 0.4);
+  }
+
+  // Traite les inputs du joystick gauche : translation latérale et avant/arrière.
+  _traiterJoystickGauche(xAxis, yAxis, vitesseTrans, dt, camForward, camRight) {
+    let bougeManuellement = false;
+    const rig = this.espace.rig;
+
+    if (xAxis !== 0) {
+      rig.position.addScaledVector(camRight, xAxis * vitesseTrans * dt);
+      bougeManuellement = true;
+    }
+    if (yAxis !== 0) {
+      rig.position.addScaledVector(camForward, -yAxis * vitesseTrans * dt);
+      bougeManuellement = true;
+    }
+
+    return { bougeManuellement, intensitePoussee: Math.hypot(xAxis, yAxis) };
+  }
+
+  // Traite les inputs du joystick droit : rotation (yaw) et altitude.
+  // Inclut aussi les boutons A/B (timeScale) et X (vue détaillée).
+  _traiterJoystickDroit(xAxis, yAxis, vitesseTrans, dt, gamepad) {
+    let bougeManuellement = false;
+    let intensitePoussee = 0;
+    const rig = this.espace.rig;
+
+    // Yaw : rotation autour de l'axe vertical du monde.
+    if (xAxis !== 0) {
+      rig.rotation.y -= xAxis * 1.5 * dt; // 1.5 rad/sec
+    }
+
+    // Altitude : monter/descendre dans l'espace monde.
+    if (yAxis !== 0) {
+      rig.position.y -= yAxis * vitesseTrans * dt;
+      bougeManuellement = true;
+    }
+    intensitePoussee = Math.abs(yAxis);
+
+    // Boutons A/B : modifient timeScale progressivement.
+    const boutonA = gamepad.buttons[4]?.pressed;
+    const boutonB = gamepad.buttons[5]?.pressed;
+    if (boutonA) {
+      this.timeScale = Math.min(2, this.timeScale + 0.6 * dt);
+      if (this.onTimeScaleChange) this.onTimeScaleChange(this.timeScale);
+    }
+    if (boutonB) {
+      this.timeScale = Math.max(0, this.timeScale - 0.6 * dt);
+      if (this.onTimeScaleChange) this.onTimeScaleChange(this.timeScale);
+    }
+
+    // Bouton X : bascule la vue détaillée de l'astre sélectionné.
+    const boutonX = gamepad.buttons[2];
+    if (boutonX && boutonX.pressed && !this._xPrecedent) {
+      if (this.trackedAstre) {
+        if (this.detailedView.visible) {
+          this.detailedView.hide();
+        } else {
+          this.detailedView.show(this.trackedAstre);
+        }
+      }
+    }
+    this._xPrecedent = boutonX?.pressed || false;
+
+    return { bougeManuellement, intensitePoussee };
+  }
+
   // Pilotage VR aux deux joysticks + boutons A/B.
   // Hors session XR : no-op (le slider HTML reste la seule entrée).
   // Retourne true si l'utilisateur a donné une input de mouvement
   // (translation ou altitude), pour que update() puisse savoir si
   // le pilotage manuel doit primer sur l'approche automatique.
   _handleVRInput(dt) {
-    // Volume fusée remis à zéro à chaque frame ; on l'accumule selon
-    // l'intensité des sticks de translation plus bas.
     this._volumeFuseeCible = 0;
 
     const session = this.espace.renderer.xr.getSession();
     if (!session) return false;
 
-    // Tutoriel d'accueil affiché : on bloque tout pilotage et timeScale
-    // tant que l'utilisateur n'a pas validé à la gâchette.
+    // Tutoriel : bloque tout pilotage et timeScale.
     if (this.tutorial && this.tutorial.visible) return false;
 
-    const camera = this.espace.camera;
-    const rig = this.espace.rig;
-
-    // Vecteurs "où regarde le casque" en coordonnées monde.
-    const camForward = new THREE.Vector3();
-    camera.getWorldDirection(camForward);
-
-    // Right = forward × up. On garde un horizon pour que l'effet de strafe
-    // reste lisible quand on regarde vers le haut/bas.
-    const camRight = new THREE.Vector3();
-    camRight.crossVectors(camForward, new THREE.Vector3(0, 1, 0));
-    if (camRight.lengthSq() < 1e-6) {
-      // Cas limite : le casque regarde quasi droit vers le haut/bas.
-      camRight.set(1, 0, 0);
-    } else {
-      camRight.normalize();
-    }
-
-    // Vitesse de translation : adaptative selon la distance au Soleil
-    // pour ne pas mettre une éternité à atteindre Neptune (~40u) ni à
-    // traverser la ceinture de Kuiper (~80–100u).
-    const distAuCentre = rig.position.length();
-    // Plancher mis à l'échelle pour rester réactif près du Soleil
-    // (le terme proportionnel à la distance se met à l'échelle tout seul).
-    const vitesseTrans = Math.max(8 * ECHELLE, distAuCentre * 0.4); // unités/sec
-    const vitesseRot = 1.5; // rad/sec
+    // Vecteurs de mouvement de la caméra.
+    const { forward: camForward, right: camRight } = this._calculerVecteursCaméra();
+    const vitesseTrans = this._calculerVitesseTranslation();
 
     let bougeManuellement = false;
-    // Accumulé sur les axes de translation des deux sticks (XY gauche + Y droit).
-    let intensitePoussee = 0;
+    let intensitePousseeGauche = 0;
+    let intensitePousseeVerticale = 0;
 
+    // Parcours les entrées XR (manettes gauche et droite).
     for (const source of session.inputSources) {
       if (!source.gamepad) continue;
       const gp = source.gamepad;
-      const hand = source.handedness; // 'left', 'right', 'none'
+      const hand = source.handedness;
 
-      // Sticks : axes 2 (X) et 3 (Y) sur le thumbstick principal.
+      // Axes 2 (X) et 3 (Y) : thumbstick principal de la manette.
       const xRaw = gp.axes.length >= 4 ? gp.axes[2] : 0;
       const yRaw = gp.axes.length >= 4 ? gp.axes[3] : 0;
       const xAxis = Math.abs(xRaw) > DEADZONE_STICK ? xRaw : 0;
       const yAxis = Math.abs(yRaw) > DEADZONE_STICK ? yRaw : 0;
 
       if (hand === 'left') {
-        // Translation latérale + avant/arrière dans le plan du regard.
-        if (xAxis !== 0) {
-          rig.position.addScaledVector(camRight, xAxis * vitesseTrans * dt);
-          bougeManuellement = true;
-        }
-        if (yAxis !== 0) {
-          // Stick poussé en avant => yAxis négatif => on avance.
-          rig.position.addScaledVector(camForward, -yAxis * vitesseTrans * dt);
-          bougeManuellement = true;
-        }
-        // Magnitude vectorielle du stick gauche (pour le volume fusée).
-        intensitePoussee += Math.hypot(xAxis, yAxis);
+        const res = this._traiterJoystickGauche(xAxis, yAxis, vitesseTrans, dt, camForward, camRight);
+        bougeManuellement = bougeManuellement || res.bougeManuellement;
+        intensitePousseeGauche = res.intensitePoussee;
       } else if (hand === 'right') {
-        // Yaw : on tourne le rig (et donc tout le repère utilisateur).
-        if (xAxis !== 0) {
-          rig.rotation.y -= xAxis * vitesseRot * dt;
-        }
-        // Altitude : translation verticale dans le repère monde.
-        if (yAxis !== 0) {
-          rig.position.y -= yAxis * vitesseTrans * dt;
-          bougeManuellement = true;
-        }
-        // Seul l'axe vertical compte comme poussée (le yaw ne fait pas avancer).
-        intensitePoussee += Math.abs(yAxis);
-
-        // Boutons A (index 4) et B (index 5) : timeScale ± progressif.
-        // Tenir le bouton fait varier en continu (~0.6 unité par seconde).
-        const boutonA = gp.buttons[4]?.pressed;
-        const boutonB = gp.buttons[5]?.pressed;
-        if (boutonA) {
-          this.timeScale = Math.min(2, this.timeScale + 0.6 * dt);
-          if (this.onTimeScaleChange) this.onTimeScaleChange(this.timeScale);
-        }
-        if (boutonB) {
-          this.timeScale = Math.max(0, this.timeScale - 0.6 * dt);
-          if (this.onTimeScaleChange) this.onTimeScaleChange(this.timeScale);
-        }
-
-        // Bouton X (index 2) : bascule la vue détaillée (si un astre est sélectionné).
-        const boutonX = gp.buttons[2];
-        if (boutonX && boutonX.pressed && !this._xPrecedent) {
-          if (this.trackedAstre) {
-            if (this.detailedView.visible) {
-              this.detailedView.hide();
-            } else {
-              this.detailedView.show(this.trackedAstre);
-            }
-          }
-        }
-        this._xPrecedent = boutonX?.pressed || false;
+        const res = this._traiterJoystickDroit(xAxis, yAxis, vitesseTrans, dt, gp);
+        bougeManuellement = bougeManuellement || res.bougeManuellement;
+        intensitePousseeVerticale = res.intensitePoussee;
       }
     }
 
-    // Plafonné à 1 : pousser deux sticks à fond ne dépasse pas 60% du volume.
-    this._volumeFuseeCible = Math.min(1, intensitePoussee) * 0.6;
+    // Accumule l'intensité de poussée (joysticks de translation).
+    const intensitePoussee = Math.min(1, intensitePousseeGauche + intensitePousseeVerticale);
+    this._volumeFuseeCible = intensitePoussee * 0.6; // 60% du volume max.
 
     return bougeManuellement;
   }
@@ -389,6 +412,44 @@ export default class CameraController {
     this._audioGain.gain.value = Math.max(0, Math.min(1, nouveau));
   }
 
+  // Applique au rig le déplacement orbital de la planète.
+  // Si la planète s'est déplacée depuis la frame précédente (elle tourne autour
+  // du Soleil), le rig suit ce mouvement → on reste "en orbite" relativement
+  // à la planète, même si sa position monde change.
+  _mettreAJourSuiviOrbital(posAstreActuelle) {
+    if (this._lastTrackedPos) {
+      const delta = posAstreActuelle.clone().sub(this._lastTrackedPos);
+      this.espace.rig.position.add(delta);
+    }
+    this._lastTrackedPos = posAstreActuelle.clone();
+  }
+
+  // Quand l'utilisateur ne pilote pas manuellement, la caméra orbite
+  // lentement autour de la planète sélectionnée (comme une "lune").
+  // Vitesse : ~0.3 rad/sec = tour complet en ~20 secondes.
+  _mettreAJourOrbiteAutomatique(posAstre, bougeManuellement, dt) {
+    if (bougeManuellement || this._distanceOrbite <= 0) {
+      return; // L'utilisateur pilote ou pas d'orbite définie.
+    }
+
+    this._angleOrbite += 0.3 * dt;
+
+    // Position orbitale : cercle horizontal autour de la planète,
+    // à la même hauteur (Y) que le rig.
+    const posRig = this.espace.rig.position;
+    const decalageX = Math.cos(this._angleOrbite) * this._distanceOrbite;
+    const decalageZ = Math.sin(this._angleOrbite) * this._distanceOrbite;
+
+    const cibleOrbite = new THREE.Vector3(
+      posAstre.x + decalageX,
+      posRig.y,
+      posAstre.z + decalageZ
+    );
+
+    // Lerp doux pour un mouvement fluide (ne pas téléporter le rig).
+    this.espace.rig.position.lerp(cibleOrbite, 0.05);
+  }
+
   setTimeScale(v) {
     this.timeScale = v;
   }
@@ -421,42 +482,8 @@ export default class CameraController {
       const posAstre = new THREE.Vector3();
       this.trackedAstre.mesh.getWorldPosition(posAstre);
 
-      // 1) Suivi orbital : on applique au rig le déplacement de l'astre
-      //    entre la frame précédente et cette frame. Le rig reste donc
-      //    à sa position relative par rapport à la planète, même quand
-      //    elle continue son orbite autour du Soleil.
-      if (this._lastTrackedPos) {
-        const delta = posAstre.clone().sub(this._lastTrackedPos);
-        this.espace.rig.position.add(delta);
-      }
-      this._lastTrackedPos = posAstre.clone();
-
-      // 2) Orbite autour de la planète : la caméra devient une "lune" qui
-      //    tourne lentement autour de la planète sélectionnée.
-      //    Vitesse d'orbite : ~0.3 rad/sec (tour complet ≈ 20 secondes).
-      if (!bougeManuellement && this._distanceOrbite > 0) {
-        this._angleOrbite += 0.3 * dt;
-
-        // Calcule la position orbitale en XZ (horizontal) à distance d'orbite,
-        // avec Y conservée pour que l'utilisateur ne soit pas jeté vers le haut/bas.
-        const posRig = this.espace.rig.position;
-        const decalageX = Math.cos(this._angleOrbite) * this._distanceOrbite;
-        const decalageZ = Math.sin(this._angleOrbite) * this._distanceOrbite;
-
-        // Cible : position de la planète + décalage orbital horizontal + Y courant.
-        const cible = new THREE.Vector3(
-          posAstre.x + decalageX,
-          posRig.y,
-          posAstre.z + decalageZ
-        );
-
-        // Lerp doux vers la cible orbitale pour un mouvement fluide.
-        this.espace.rig.position.lerp(cible, 0.05);
-      } else if (bougeManuellement) {
-        // L'utilisateur pilote : on coupe l'orbite pré-calculée, mais on garde
-        // le suivi orbital (l'astre reste tracké).
-        // Ne rien faire : la position du rig reste libre au pilotage.
-      }
+      this._mettreAJourSuiviOrbital(posAstre);
+      this._mettreAJourOrbiteAutomatique(posAstre, bougeManuellement, dt);
     }
   }
 }
