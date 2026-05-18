@@ -22,8 +22,8 @@ export default class Espace {
     const ambiante = new THREE.AmbientLight(0xffffff, 0.08);
     this.scene.add(ambiante);
 
-    // Far plane mis à l'échelle aussi : sinon Neptune et la ceinture de Kuiper
-    // disparaissent au-delà de la frustum quand le système est agrandi.
+    // Far plane mis à l'échelle (pour rester correct si on rejoue avec ECHELLE).
+    // 1000 * ECHELLE laisse une marge confortable au-delà de Kuiper (rayon ~100).
     this.camera = new THREE.PerspectiveCamera(
       60,
       window.innerWidth / window.innerHeight,
@@ -45,6 +45,12 @@ export default class Espace {
     this.camera.position.set(0, 30 * ECHELLE, 120 * ECHELLE);
     this.camera.lookAt(0, 0, 0); // Regarder vers le Soleil
 
+    // Active toutes les couches : on isole chaque système planétaire
+    // (planète + ses lunes) sur une couche dédiée pour que les ombres des
+    // lunes ne tombent que sur leur planète. La caméra doit voir toutes ces
+    // couches, sinon les planètes "isolées" disparaîtraient à l'écran.
+    this.camera.layers.enableAll();
+
     // 3. Le renderer : un seul <canvas> pour tout le monde
     this.renderer = new THREE.WebGLRenderer({ antialias: true });
     this.renderer.setSize(window.innerWidth, window.innerHeight);
@@ -53,6 +59,13 @@ export default class Espace {
     // (un peu plus coûteux mais bien plus joli que les ombres "pixelisées").
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    // Tone mapping ACES : compresse les hautes valeurs (HDR) vers le 0-1
+    // affichable au lieu de cramer en blanc pur. Sans ça, les planètes
+    // proches du Soleil (Mercure, Vénus) reçoivent une luminosité bien
+    // supérieure à 1.0 et apparaissent complètement saturées.
+    // toneMappingExposure = 1.0 = neutre ; baisser = scène plus sombre.
+    this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    this.renderer.toneMappingExposure = 1.0;
     // Activer le support WebXR (indispensable pour le mode VR).
     this.renderer.xr.enabled = true;
     document.body.appendChild(this.renderer.domElement);
@@ -87,3 +100,4 @@ export default class Espace {
     this.renderer.render(this.scene, this.camera);
   }
 }
+

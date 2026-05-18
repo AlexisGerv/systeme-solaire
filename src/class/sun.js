@@ -29,15 +29,13 @@ export default class Soleil extends Astre {
     //    correctes" -> il faut des valeurs bien plus élevées qu'avant.
     //  - distance = 0 : pas de portée maximale (la lumière atteint tout).
     //  - decay = 1 : atténuation plus douce que le réalisme (qui serait 2).
-    const lumiere = new THREE.PointLight(0xffffff, 100, 0, 1);
-    // On dit à la lumière de générer des ombres.
-    // Une PointLight rend en réalité 6 "shadow maps" (une par direction du cube)
-    // -> c'est la lumière la plus coûteuse en ombres, mais c'est ce qu'il faut
-    // ici car le Soleil éclaire dans toutes les directions.
-    lumiere.castShadow = true;
-    // Résolution de la shadow map : plus c'est haut, plus l'ombre est nette.
-    lumiere.shadow.mapSize.width = 1024;
-    lumiere.shadow.mapSize.height = 1024;
+    // Cette lumière "globale" éclaire tout ce qui est sur la couche par défaut
+    // (couche 0) : Mercure, Vénus, Mars, Uranus, Neptune, ceintures, etc.
+    // Elle ne projette PAS d'ombres : les ombres sont gérées par des
+    // PointLight dédiées par "système planétaire" (cf. main.js), chacune sur
+    // sa propre couche, pour que les lunes n'éclipsent QUE leur planète et
+    // pas un astre situé plus loin sur la même ligne Soleil → lune.
+    const lumiere = new THREE.PointLight(0xffffff, 10, 0, 1);
     this.pivot.add(lumiere);
   }
 

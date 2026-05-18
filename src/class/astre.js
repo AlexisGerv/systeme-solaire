@@ -3,10 +3,10 @@ import * as THREE from 'three';
 // Facteur d'échelle global appliqué aux tailles ET aux distances orbitales.
 // Augmenter cette valeur agrandit tout le système solaire en bloc, sans
 // toucher aux vitesses (les périodes orbitales restent identiques).
-// Choisi à 10 pour donner un véritable sentiment de grandeur en VR : on se
-// sent vraiment minuscule à côté de Jupiter, et la traversée du système
-// gagne en immersion sans changer le rythme d'animation.
-export const ECHELLE = 10;
+// Ramené à 1 : on garde le système à sa taille initiale et on délègue le
+// "sentiment de grandeur" à la poussière spatiale (parallaxe pendant les
+// déplacements).
+export const ECHELLE = 1;
 
 // Classe parente commune à tous les astres (Soleil, Terre, Lune...).
 // Elle factorise : création de la sphère, chargement de la texture,

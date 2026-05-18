@@ -18,6 +18,7 @@ import { ECHELLE } from './class/astre.js';
 //   Stick droit  Y  -> monter / descendre
 //   Bouton A (droit) -> timeScale +
 //   Bouton B (droit) -> timeScale -
+//   Bouton X (droit) -> basculer vue détaillée
 //   Gâchette        -> sélection au laser (raycast 30u)
 // Portée du raycaster mise à l'échelle : avec un système agrandi, on doit
 // pouvoir viser une planète d'un peu plus loin sans pour autant rendre la
@@ -26,34 +27,41 @@ const PORTEE_RAYCASTER = 30 * ECHELLE;
 const DEADZONE_STICK = 0.15;
 
 export default class CameraController {
-  constructor(espace, astres, infoBubble, hud, tutorial) {
+  constructor(espace, astres, infoBubble, detailedView, hud, tutorial, hyperespace, messageBienvenue) {
     this.espace = espace;
     this.astres = astres;
     this.infoBubble = infoBubble;
+    this.detailedView = detailedView;
     this.hud = hud;
     // Panneau d'aide affiché au début de chaque session VR. Tant qu'il
     // est visible, _handleVRInput et _onSelect court-circuitent : pas
     // de mouvement ni de sélection avant que l'utilisateur ait validé
     // d'un coup de gâchette.
     this.tutorial = tutorial;
+    // Animation d'entrée VR : tunnel d'hyperespace affiché autour du
+    // casque tant que le tutoriel est ouvert ; fade out à la validation.
+    this.hyperespace = hyperespace;
+    // Message "Bienvenue dans le système solaire" qui apparaît juste
+    // après la sortie d'hyperespace, puis se cache tout seul.
+    this.messageBienvenue = messageBienvenue;
     this.raycaster = new THREE.Raycaster();
     // Portée du raycaster : le but est de forcer l'utilisateur à
     // s'approcher d'une planète pour pouvoir la sélectionner.
     this.raycaster.far = PORTEE_RAYCASTER;
+    // On autorise toutes les couches : les planètes à lunes (Terre, Jupiter,
+    // Saturne) sont isolées sur des couches dédiées pour les ombres, et
+    // doivent rester sélectionnables au laser.
+    this.raycaster.layers.enableAll();
 
     this.trackedAstre = null;
     // Position monde de l'astre suivi à la frame précédente :
     // sert à appliquer le déplacement orbital de la planète au rig
     // (on reste "en orbite" même quand la planète bouge autour du Soleil).
     this._lastTrackedPos = null;
-    // Phase d'approche initiale après un clic : on lerp vers l'astre.
-    // Désactivée dès qu'on est suffisamment proche, ou si l'utilisateur
-    // commence à piloter au stick (priorité au pilotage manuel).
-    this._approcheInitiale = false;
-    // Direction du regard (XZ, normalisée) capturée à l'instant du clic.
-    // La cible d'approche est alignée sur cet axe pour qu'à l'arrivée
-    // la planète soit pile devant le casque, sans rotation de tête.
-    this._dirApproche = null;
+    // Orbite autour de la planète sélectionnée : angle en radians pour la rotation.
+    this._angleOrbite = 0;
+    // Distance d'orbite (rayon de la "lune" de la caméra autour de la planète).
+    this._distanceOrbite = 0;
 
     this.timeScale = 1;
     // Callback optionnel pour synchroniser une UI externe (slider HTML)
@@ -73,6 +81,9 @@ export default class CameraController {
     this._audioSource = null;
     this._volumeFuseeCible = 0;
     this._chargerAudioFusee('/jci21-rocket-launch-sfx-253937.mp3');
+
+    // État du bouton X pour détecter les appuis (et non pas tenir le bouton).
+    this._xPrecedent = false;
 
     this._initControllers();
     this._initTutorialEvents();
@@ -100,8 +111,23 @@ export default class CameraController {
       this._approcheInitiale = false;
       this._dirApproche = null;
       this.tutorial.show();
+      // Tunnel d'hyperespace synchronisé avec l'affichage du tutoriel :
+      // l'utilisateur "arrive" en hyperespace, lit les contrôles, puis
+      // valide pour sortir.
+      if (this.hyperespace) this.hyperespace.show();
+      // Au cas où une session précédente aurait laissé le message visible.
+      if (this.messageBienvenue) this.messageBienvenue.hide();
     });
-    xr.addEventListener('sessionend', () => this.tutorial.hide());
+    xr.addEventListener('sessionend', () => {
+      this.tutorial.hide();
+      if (this.hyperespace) {
+        this.hyperespace.hide();
+        // Coupe forcé : si l'utilisateur quitte la VR pendant le bruit
+        // de sortie, on ne veut pas que le son continue après.
+        this.hyperespace.arreterAudio();
+      }
+      if (this.messageBienvenue) this.messageBienvenue.hide();
+    });
   }
 
   _initControllers() {
@@ -131,8 +157,12 @@ export default class CameraController {
   _onSelect(event) {
     // Si le tutoriel est visible, la première gâchette sert juste à le
     // fermer : on ne fait pas de raycast, et on ne change pas trackedAstre.
+    // C'est aussi le moment où on déclenche la sortie d'hyperespace et
+    // où on affiche le message de bienvenue.
     if (this.tutorial && this.tutorial.visible) {
       this.tutorial.hide();
+      if (this.hyperespace) this.hyperespace.startSortie();
+      if (this.messageBienvenue) this.messageBienvenue.show();
       return;
     }
 
@@ -151,21 +181,20 @@ export default class CameraController {
       if (object.userData && object.userData.astre) {
         this.trackedAstre = object.userData.astre;
         this._lastTrackedPos = null; // recalculé à la prochaine frame
-        this._approcheInitiale = true;
 
-        // Snapshot de la direction du regard (XZ uniquement) : sert à
-        // calculer la cible d'approche pour que la planète atterrisse
-        // pile dans l'axe du casque. On gèle la valeur ici pour que
-        // l'animation reste stable même si l'utilisateur bouge la tête
-        // ou tourne au stick pendant le déplacement.
-        const dir = new THREE.Vector3();
-        this.espace.camera.getWorldDirection(dir);
-        dir.y = 0;
-        if (dir.lengthSq() < 1e-6) dir.set(0, 0, -1);
-        else dir.normalize();
-        this._dirApproche = dir;
+        // Initialise l'orbite : distance = portée du laser + rayon de la planète.
+        // La caméra devient une "lune" qui tourne autour de la planète.
+        this._distanceOrbite = PORTEE_RAYCASTER + this.trackedAstre.rayon;
+
+        // Angle d'orbite basé sur la direction actuelle rig↔planète.
+        const posAstre = new THREE.Vector3();
+        this.trackedAstre.mesh.getWorldPosition(posAstre);
+        const posRig = this.espace.rig.position;
+        const dir = posAstre.clone().sub(posRig);
+        this._angleOrbite = Math.atan2(dir.x, dir.z);
 
         this.infoBubble.show(this.trackedAstre);
+        this.detailedView.hide();
         if (this.hud) this.hud.setOrbit(this.trackedAstre.nom);
 
         // Flash rouge sur la ligne pour confirmer la sélection.
@@ -179,9 +208,10 @@ export default class CameraController {
       // Clic dans le vide (ou hors portée du raycaster) = annuler le tracking.
       this.trackedAstre = null;
       this._lastTrackedPos = null;
-      this._approcheInitiale = false;
-      this._dirApproche = null;
+      this._angleOrbite = 0;
+      this._distanceOrbite = 0;
       this.infoBubble.hide();
+      this.detailedView.hide();
       if (this.hud) this.hud.setOrbit(null);
     }
   }
@@ -222,10 +252,11 @@ export default class CameraController {
     }
 
     // Vitesse de translation : adaptative selon la distance au Soleil
-    // pour ne pas mettre une éternité à atteindre Neptune (~150u).
+    // pour ne pas mettre une éternité à atteindre Neptune (~40u) ni à
+    // traverser la ceinture de Kuiper (~80–100u).
     const distAuCentre = rig.position.length();
-    // Plancher de vitesse mis à l'échelle pour rester réactif près du Soleil
-    // (le terme proportionnel à la distance se met déjà à l'échelle tout seul).
+    // Plancher mis à l'échelle pour rester réactif près du Soleil
+    // (le terme proportionnel à la distance se met à l'échelle tout seul).
     const vitesseTrans = Math.max(8 * ECHELLE, distAuCentre * 0.4); // unités/sec
     const vitesseRot = 1.5; // rad/sec
 
@@ -282,6 +313,19 @@ export default class CameraController {
           this.timeScale = Math.max(0, this.timeScale - 0.6 * dt);
           if (this.onTimeScaleChange) this.onTimeScaleChange(this.timeScale);
         }
+
+        // Bouton X (index 2) : bascule la vue détaillée (si un astre est sélectionné).
+        const boutonX = gp.buttons[2];
+        if (boutonX && boutonX.pressed && !this._xPrecedent) {
+          if (this.trackedAstre) {
+            if (this.detailedView.visible) {
+              this.detailedView.hide();
+            } else {
+              this.detailedView.show(this.trackedAstre);
+            }
+          }
+        }
+        this._xPrecedent = boutonX?.pressed || false;
       }
     }
 
@@ -359,6 +403,19 @@ export default class CameraController {
     // Tutoriel : repositionné chaque frame devant la caméra. Le Sprite
     // étant déjà un billboard, il reste face à l'utilisateur.
     if (this.tutorial) this.tutorial.update(this.espace.camera);
+    // Tunnel d'hyperespace : suit la position du casque, fade out auto.
+    if (this.hyperespace) {
+      this.hyperespace.update(dt, this.espace.camera, this.espace.rig);
+    }
+    // Message de bienvenue : machine à états (fadeIn/visible/fadeOut).
+    if (this.messageBienvenue) {
+      this.messageBienvenue.update(dt, this.espace.camera);
+    }
+
+    // Vue détaillée : mise à jour du positionnement et rendu du modèle 3D.
+    if (this.detailedView) {
+      this.detailedView.update();
+    }
 
     if (this.trackedAstre) {
       const posAstre = new THREE.Vector3();
@@ -374,26 +431,31 @@ export default class CameraController {
       }
       this._lastTrackedPos = posAstre.clone();
 
-      // 2) Approche initiale : juste après un clic, on glisse en lerp
-      //    vers une position d'observation décalée. La cible est calculée
-      //    le long de la direction du regard au moment du clic
-      //    (cf. _dirApproche) : à l'arrivée, la planète est pile devant
-      //    le casque sans avoir à tourner la tête.
-      //    L'effet se coupe dès qu'on est arrivé OU dès que l'utilisateur
-      //    prend la main au stick gauche.
-      if (this._approcheInitiale && !bougeManuellement && this._dirApproche) {
-        const decalage = Math.max(10 * ECHELLE, this.trackedAstre.rayon * 3);
-        // cible = planet - decalage * dirApproche
-        // À cible, en regardant dans dirApproche, la planète est à 'decalage' devant.
-        const cible = posAstre.clone().addScaledVector(this._dirApproche, -decalage);
+      // 2) Orbite autour de la planète : la caméra devient une "lune" qui
+      //    tourne lentement autour de la planète sélectionnée.
+      //    Vitesse d'orbite : ~0.3 rad/sec (tour complet ≈ 20 secondes).
+      if (!bougeManuellement && this._distanceOrbite > 0) {
+        this._angleOrbite += 0.3 * dt;
+
+        // Calcule la position orbitale en XZ (horizontal) à distance d'orbite,
+        // avec Y conservée pour que l'utilisateur ne soit pas jeté vers le haut/bas.
+        const posRig = this.espace.rig.position;
+        const decalageX = Math.cos(this._angleOrbite) * this._distanceOrbite;
+        const decalageZ = Math.sin(this._angleOrbite) * this._distanceOrbite;
+
+        // Cible : position de la planète + décalage orbital horizontal + Y courant.
+        const cible = new THREE.Vector3(
+          posAstre.x + decalageX,
+          posRig.y,
+          posAstre.z + decalageZ
+        );
+
+        // Lerp doux vers la cible orbitale pour un mouvement fluide.
         this.espace.rig.position.lerp(cible, 0.05);
-        if (this.espace.rig.position.distanceTo(cible) < 1) {
-          this._approcheInitiale = false;
-        }
       } else if (bougeManuellement) {
-        // L'utilisateur pilote : on coupe l'approche, mais on garde
-        // l'astre en suivi orbital (statut "En orbite autour de X" maintenu).
-        this._approcheInitiale = false;
+        // L'utilisateur pilote : on coupe l'orbite pré-calculée, mais on garde
+        // le suivi orbital (l'astre reste tracké).
+        // Ne rien faire : la position du rig reste libre au pilotage.
       }
     }
   }
