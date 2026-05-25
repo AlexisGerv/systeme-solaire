@@ -6,8 +6,8 @@ export default class CeintureKuiper extends CeintureAsteroides {
   constructor(scene) {
     super(scene, {
       nombre: 2000,
-      rayonMin: 80,
-      rayonMax: 100,
+      rayonMin: 55,
+      rayonMax: 80,
       epaisseur: 2.0,
       tailleMin: 0.03,
       tailleMax: 0.2,

@@ -49,7 +49,7 @@ export default class CeintureAsteroides {
 
     this.mesh = new THREE.InstancedMesh(geometry, material, this.nombre);
     this.mesh.castShadow = false;     // 1500 ombres tueraient les FPS
-    this.mesh.receiveShadow = true;
+    this.mesh.receiveShadow = false;
 
     // Objet temporaire pour composer chaque matrice d'instance.
     const dummy = new THREE.Object3D();
