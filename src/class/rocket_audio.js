@@ -1,4 +1,4 @@
-export default class RocketAudio {
+  export default class RocketAudio {
   constructor(url = '/jci21-rocket-launch-sfx-253937.mp3') {
     this.url = url;
     this.context = null;
