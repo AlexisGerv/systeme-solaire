@@ -1,7 +1,13 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "Bash(dir \"e:\\\\Code\\\\Systeme Solaire\\\\systeme solaire\")",
+      "Bash(dir \"e:\\\\Code\\\\Systeme Solaire\\\\systeme solaire\\\\src\")",
+      "Bash(dir \"e:\\\\Code\\\\Systeme Solaire\\\\systeme solaire\\\\public\")",
+      "Bash(dir \"e:\\\\Code\\\\Systeme Solaire\\\\systeme solaire\\\\src\\\\class\")",
+      "Bash(node -e \"const d = require\\('e:/Code/Systeme Solaire/systeme solaire/public/info_planete.json'\\); console.log\\('Jupiter:', d.jupiter.moons.length, 'lunes ->', d.jupiter.moons.map\\(m=>m.name\\).join\\(', '\\)\\); console.log\\('Saturn:', d.saturn.moons.length, 'lunes ->', d.saturn.moons.map\\(m=>m.name\\).join\\(', '\\)\\);\")",
+      "Bash(npx vite *)"
     ]
   }
 }

@@ -9,7 +9,7 @@ export default class Jupiter extends Astre {
       // un ratio visible mais qui n'écrase pas les autres planètes.
       rayon: 2.2,
       vitesseRotation: 0.02439,  // 0.01 / 0.41 jours
-      distanceOrbite: 26,
+      distanceOrbite: 22,
       vitesseOrbite: 0.000422,  // 0.005 × 365.25 / 4331.6 jours
       inclinaison: 3.13,
       nom: "Jupiter",

@@ -30,8 +30,7 @@ export default class Astre {
     vitesseOrbite = 0,
     emissif = false,           // true = brille seul (Soleil) ; false = éclairé (Terre, Lune)
     inclinaison = 0,           // inclinaison de l'axe en degrés (Terre : 23.5°)
-    castShadow = false,        // par défaut, les planètes ne projettent pas d'ombre
-    receiveShadow = true,      // mais elles peuvent en recevoir (éclipses)
+    ombre = true,              // false = n'utilise pas la shadow map (utile pour les nombreuses petites lunes)
     nom = "Inconnu",
     info = "Pas d'information disponible",
   }) {
@@ -49,8 +48,7 @@ export default class Astre {
     this.vitesseOrbite = vitesseOrbite;
     this.emissif = emissif;
     this.inclinaison = inclinaison;
-    this.castShadow = castShadow;
-    this.receiveShadow = receiveShadow;
+    this.ombre = ombre;
     this.nom = nom;
     this.info = info;
   }
@@ -98,10 +96,12 @@ export default class Astre {
     this.mesh = new THREE.Mesh(geometry, material);
     this.mesh.userData = { astre: this };
 
-    // Ombres : seuls les astres NON émissifs participent.
-    if (!this.emissif) {
-      this.mesh.castShadow = this.castShadow;
-      this.mesh.receiveShadow = this.receiveShadow;
+    // Ombres : seuls les astres NON émissifs participent. On peut aussi
+    // les désactiver explicitement (ex: dizaines de petites lunes) pour
+    // épargner la shadow map.
+    if (!this.emissif && this.ombre) {
+      this.mesh.castShadow = true;
+      this.mesh.receiveShadow = true;
     }
 
     this.tilt.add(this.mesh);

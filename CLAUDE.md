@@ -1,121 +1,148 @@
 # CLAUDE.md
 
-Guide pour Claude Code dans ce dépôt. Tout le code et les commentaires sont en français — garder cette convention.
+> Document lu automatiquement par Claude Code au début de chaque conversation.
+> **À mettre à jour à chaque nouvelle implémentation** pour éviter de re-scanner le projet.
 
-## Projet
+## Vue d'ensemble
 
-Système solaire interactif en 3D avec support VR (WebXR), construit avec **Three.js** et **Vite**. Toutes les planètes, leurs lunes principales, la ceinture d'astéroïdes et la ceinture de Kuiper, autour d'un Soleil émissif. Sélection d'astre au laser de manette pour afficher une fiche d'information et téléporter doucement la caméra.
+Système solaire 3D en WebGL via **Three.js r0.184**, bundlé par **Vite 8**.
+Support **VR/WebXR** activé. Pas de framework UI, pas de TypeScript.
 
-## Lancer
+- Démarrage : `npm run dev`
+- Build : `npm run build`
+- Preview : `npm run preview`
 
-```bash
-npm install
-npm run dev      # serveur Vite en développement
-npm run build    # build de production -> dist/
-npm run preview  # prévisualise le build
-```
-
-## Arborescence
+## Architecture
 
 ```
 src/
-├── main.js                point d'entrée : instancie astres + boucle d'animation
-├── espace.js              scène + caméra + rig + renderer + OrbitControls + VRButton
-├── camera_controller.js   manettes XR + raycast/sélection + suivi rig + joystick→timeScale
-├── controller.js          ⚠ scratch/legacy non importé (références non résolues)
+├── main.js              point d'entrée : instancie tout, boucle d'animation
+├── espace.js            scène + caméra + renderer + OrbitControls + VR
 ├── style.css
 └── class/
-    ├── astre.js           classe parente : pivot/anchor/tilt + sphère texturée
-    ├── sun.js             émissif + PointLight castShadow
-    ├── mercury.js, venus.js, earth.js, mars.js, jupiter.js, saturn.js, uranus.js, neptune.js
-    ├── moon.js            satellite par défaut (texture lune)
-    ├── satellite.js       lune générique (Io/Europa/Ganymède/Callisto/Titan/...)
-    ├── asteroid_belt.js, kuiper_belt.js
-    ├── info_bubble.js     bulle d'info (Sprite + CanvasTexture, lisible en VR)
-    ├── hud.js             HUD attaché à la caméra : astre suivi, vitesse, raccourcis A/B
-    └── vr_tutorial.js     panneau d'accueil VR (Sprite + CanvasTexture) — gâchette pour valider
+    ├── astre.js         classe parente (pivot/anchor/tilt/mesh + update())
+    ├── sun.js           hérite Astre, ajoute la PointLight
+    ├── mercury.js       hérite Astre, paramètres en dur
+    ├── venus.js         hérite Astre
+    ├── earth.js         hérite Astre
+    ├── moon.js          hérite Astre, paramètres en options (réutilisée pour les lunes JSON)
+    ├── mars.js          hérite Astre
+    ├── jupiter.js       hérite Astre
+    ├── saturn.js        hérite Astre, surcharge init() pour les anneaux
+    ├── uranus.js        hérite Astre
+    ├── neptune.js       hérite Astre
+    ├── asteroid_belt.js InstancedMesh, n'hérite PAS d'Astre
+    └── kuiper_belt.js   hérite de CeintureAsteroides
 
 public/
-├── 2k_*.jpg, 8k_stars_milky_way.jpg   textures (servies à la racine par Vite)
-└── info_planete.json                   métadonnées des planètes/lunes
+├── info_planete.json    données réelles (km, jours) pour les lunes de Jupiter/Saturne
+├── 2k_*.jpg             textures planètes
+├── 8k_stars_milky_way.jpg  fond étoilé equirectangulaire
+├── 2k_saturn_ring_alpha.png  texture des anneaux (canal alpha)
+└── favicon.svg, icons.svg
 ```
 
-## Architecture clé
+## Concepts clé
 
-### Hiérarchie d'un astre — `class/astre.js`
-
-```
-parent → pivot (tourne pour produire l'orbite)
-       → anchor (décalé à distanceOrbite, NE TOURNE PAS — point d'ancrage des satellites)
-       → tilt (groupe figé à l'inclinaison de l'axe)
-       → mesh (tourne sur son axe propre)
-```
-
-- `anchor` ne tourne pas : c'est lui qu'il faut passer en `parent` pour attacher une lune sans qu'elle hérite de la rotation propre de la planète.
-- `tilt` permet à l'axe Nord-Sud de rester pointé dans la même direction pendant que `mesh.rotation.y` tourne.
-- Un astre se déclare en héritant d'`Astre` et en appelant `super({...})` avec ses paramètres (voir `sun.js`, `earth.js`).
-- `mesh.userData.astre = this` permet au raycaster de remonter à l'instance depuis la sélection.
-
-### Rig caméra et VR — `espace.js`
+### Hiérarchie d'un astre — [src/class/astre.js](src/class/astre.js)
 
 ```
-scene → rig (Group, position initiale (0, 0, 0))
-      → camera (position locale initiale (0, 30, 120), regarde le centre)
+parent → pivot → anchor → tilt → mesh
 ```
 
-Vue d'arrivée : la caméra est positionnée juste à l'extérieur de la ceinture de Kuiper (rayon 80-100), légèrement au-dessus du plan orbital. L'utilisateur "arrive" et découvre le système solaire de loin.
+- **pivot** (`THREE.Group`, centré sur le parent) : sa rotation Y crée l'**orbite**
+- **anchor** (décalé de `distanceOrbite` sur X, **non incliné**) : position réelle de l'astre. Sert d'**accroche pour les satellites** (ex : `lune = new Lune(scene, terre.anchor)`)
+- **tilt** : applique l'inclinaison axiale (figée)
+- **mesh** : tourne sur lui-même via `vitesseRotation`
 
-En WebXR, la caméra est écrasée chaque frame par la pose du casque ; on **déplace donc le rig**, jamais la caméra elle-même. Les manettes XR sont aussi attachées au rig (cf. `camera_controller.js`) pour qu'elles suivent quand le rig se téléporte. À `sessionstart`, `camera_controller` téléporte le rig à `(0, 30, 120)` pour reproduire la même vue d'arrivée en VR (et réinitialise `trackedAstre` / approche initiale).
+`update()` ne fait que deux additions : `mesh.rotation.y += vitesseRotation` et `pivot.rotation.y += vitesseOrbite`.
 
-### Boucle d'animation — `main.js`
+### Échelle / unités
 
-`renderer.setAnimationLoop(...)` (et **pas** `requestAnimationFrame`) — obligatoire pour WebXR. Elle se cale sur `XRFrame` et se coupe d'elle-même à la fin de la session.
+**Pas de réalisme en distance** — tout est compressé pour rester lisible.
+- `rayon` Terre = 1 (référence). Jupiter à 2.2 (vrai ratio ~11).
+- `distanceOrbite` : Mercure 3.5 → Neptune 50 (unités de scène, pas UA).
+- Marges réservées entre planètes pour les ceintures et lunes.
 
+### Vitesses — formules utilisées
+
+Convention dans les classes planètes :
+- `vitesseOrbite = 0.005 * 365.25 / période_orbitale_en_jours` (Terre = 0.005 par convention)
+- `vitesseRotation = 0.01 / période_de_rotation_en_jours` (Terre = 0.01)
+- Signe positif/négatif = sens direct/rétrograde (Vénus a un signe positif mais une inclinaison de 177.4° → rétrograde visuellement)
+
+Pour les lunes JSON ([main.js:84-88](src/main.js#L84-L88)) :
 ```js
-cameraController.update();                      // input VR + suivi rig
-for (const astre of astres) astre.update(timeScale);
-infoBubble.update();
-espace.render();
+v = sign(periode) * min(K_LUNE / |periode|, VITESSE_MAX)
+// K_LUNE = 0.05, VITESSE_MAX = 0.08
 ```
 
-### Interaction VR — `camera_controller.js`
+### Distances des lunes JSON ([main.js:93-110](src/main.js#L93-L110))
 
-Pilotage 6DoF "vaisseau spatial" aux deux joysticks (deadzone 0.15, vitesse adaptative selon la distance au Soleil) :
+Mapping **logarithmique** km → plage `[rmin, rmax]` :
+```js
+t = (log10(distance) - log10(min)) / (log10(max) - log10(min))
+distanceOrbite = rmin + t * (rmax - rmin)
+```
+Bornes actuelles : Jupiter `[2.6, 4.5]`, Saturne `[4.5, 6.5]`.
 
-- **Stick gauche X** → strafe latéral (selon `camRight`)
-- **Stick gauche Y** → avancer / reculer (selon `camForward`)
-- **Stick droit X** → yaw (rotation du rig autour de Y)
-- **Stick droit Y** → monter / descendre (translation verticale monde)
-- **Bouton A (droite, index 4)** → `timeScale +`
-- **Bouton B (droite, index 5)** → `timeScale -`
-- **Gâchette (`select`)** → raycast 30u → si un mesh d'astre est touché : `trackedAstre`, `infoBubble.show()`, `hud.setOrbit()`, flash rouge sur le laser.
+### Ombres
 
-`onTimeScaleChange` synchronise le slider HTML et le HUD VR. Le pilotage manuel coupe l'approche initiale (mais conserve le suivi orbital). Suivi : on applique au rig le déplacement frame à frame de l'astre suivi (suivi orbital), plus une approche en lerp `0.05` vers une cible à `max(10, rayon * 3)` devant le casque (cible figée à l'instant du clic via `_dirApproche`).
+- `renderer.shadowMap.enabled = true`, `PCFSoftShadowMap`
+- Soleil = `PointLight` avec `castShadow = true` (6 shadow maps internes, coûteux)
+- Astres non-émissifs : `cast` + `receiveShadow` activés par défaut
+- **Désactivés explicitement** pour les ceintures et les lunes JSON (`ombre: false`) — sinon les FPS s'effondrent
 
-Audio fusée (Web Audio API) : `_chargerAudioFusee` charge le clip et joue uniquement la portion sustain en boucle (`loopStart`/`loopEnd`) pour éviter d'entendre l'attaque/décroissance à chaque rebouclage. Le gain est piloté par l'intensité combinée des sticks de translation, lissé par lerp (~150ms à 60fps).
+### Boucle d'animation
 
-### Tutoriel VR — `class/vr_tutorial.js`
+`renderer.setAnimationLoop()` (au lieu de `requestAnimationFrame`) — **requis pour WebXR/VR**. Itère sur le tableau `astres` et appelle `astre.update()` puis `espace.render()`.
 
-Panneau d'aide affiché à `sessionstart` listant les contrôles. Sprite + CanvasTexture, repositionné chaque frame à 5 unités devant la caméra. Tant que `tutorial.visible` est vrai :
+## Détail des paramètres planètes (état actuel)
 
-- `_handleVRInput` retourne `false` immédiatement (mouvement/timeScale/audio bloqués)
-- `_onSelect` se contente de fermer le tutoriel — pas de raycast ni de sélection d'astre
+| Astre | rayon | distance | vitesseOrbite | vitesseRotation | inclinaison | particularité |
+|---|---|---|---|---|---|---|
+| Soleil | 2 | 0 | — | 0.000394 | — | `emissif: true`, PointLight |
+| Mercure | 0.383 | 3.5 | 0.02074 | 0.000171 | 0.034 | |
+| Vénus | 0.95 | 5.5 | 0.00813 | 0.0000412 | 177.4 | rétrograde via tilt |
+| Terre | 1 | 8.5 | 0.005 | 0.01 | 23.44 | parent de la Lune |
+| Lune | 0.27 | 1.5 (de Terre) | 0.0669 | 0.0669 | — | accrochée à `terre.anchor` |
+| Mars | 0.532 | 12 | 0.00266 | 0.00971 | 25.19 | |
+| Ceinture astéroïdes | — | 13.5–16 | 0.0032 | — | — | InstancedMesh ×1500 |
+| Jupiter | 2.2 | 22 | 0.000422 | 0.02439 | 3.13 | lunes via JSON |
+| Saturne | 1.9 | 34 | 0.00017 | 0.02222 | 26.73 | + anneaux, lunes via JSON |
+| Uranus | 1.4 | 44 | 0.0000595 | 0.01389 | 97.77 | axe quasi couché |
+| Neptune | 1.35 | 50 | 0.0000304 | 0.01493 | 28.32 | |
+| Ceinture Kuiper | — | 55–80 | 0.0004 | — | — | hérite de Ceinture astéroïdes |
 
-Premier appui sur la gâchette → `tutorial.hide()` → contrôles débloqués. À `sessionend` le tutoriel est aussi caché (re-affiché à la prochaine entrée VR).
+## Conventions de code
 
-## Conventions
+- **Français** : noms de variables (`pivot`, `anchor`, `vitesseOrbite`), commentaires explicatifs.
+- **Pas de TypeScript**, ESM (`"type": "module"`).
+- Constructeurs des planètes = simple appel `super({ ... })` avec valeurs en dur.
+- Surcharger `init()` (et appeler `super.init()`) pour tout ajout spécifique : lumière du Soleil, anneaux de Saturne. **Ne pas** surcharger `update()` sauf cas vraiment nécessaire.
+- Les ceintures **n'héritent pas** d'Astre (collection ≠ corps unique).
 
-- **Langue** : tout en français (noms de classes, commentaires, variables UI). Continuer ainsi.
-- **Commentaires** : déjà denses et pédagogiques (le projet est éducatif). Ne pas les supprimer en refactor sauf demande explicite.
-- **Pas de TypeScript**, JS pur en modules ES (`"type": "module"`).
-- **Textures** dans `public/` → accessibles via chemin absolu (`/2k_earth_daymap.jpg`).
-- **Échelles** non réalistes : distances et tailles compressées pour rester visibles. Voir le mapping log des distances de lunes dans `main.js` quand pertinent.
-- **Périodes orbitales rétrogrades** : encodées par un `vitesseOrbite` négatif.
+## Ce qui pilote quoi
 
-## Pièges courants
+- **Planètes & inner moons (Lune)** : valeurs codées en dur dans chaque classe.
+- **Lunes de Jupiter/Saturne** : `public/info_planete.json` chargé en `await fetch()` dans `main.js`, puis `ajouterLunes()` instancie des `Lune` configurées.
+- **Tailles des lunes JSON** : table `TAILLE_LUNE` dans `main.js` pour les lunes notables, sinon `TAILLE_DEFAUT = 0.035`.
 
-- Bouger la `camera` directement en VR : sans effet (écrasée par la pose XR). Utiliser le `rig`.
-- Ajouter un objet d'UI à `scene` au lieu du `rig` quand il doit suivre la caméra (ex : manettes — bug corrigé récemment). Exception assumée : `vr_tutorial` est dans `scene` mais repositionné chaque frame devant la caméra, donc l'effet est équivalent.
-- Oublier `mesh.userData.astre = this` dans une nouvelle classe d'astre : la sélection au laser ne retrouvera pas l'instance.
-- Utiliser `requestAnimationFrame` à la place de `setAnimationLoop` casse le rendu stéréo.
-- Oublier de tester `this.tutorial.visible` avant d'ajouter une nouvelle action liée à la gâchette / aux sticks : tant que le tutoriel est ouvert, l'input doit être ignoré sinon l'utilisateur peut bouger pendant la lecture.
+## Workflow / commits
+
+- Branche principale : `main`
+- Commits récents en français descriptif court (« correction des ombres des astéroïdes », « VR + correction »).
+- Pas de tests automatisés, pas de lint configuré.
+
+---
+
+## Comment maintenir ce document
+
+À chaque modification du projet, mettre à jour les sections concernées :
+- **Nouveau fichier** → l'ajouter à l'arborescence (`Architecture`).
+- **Nouvelle planète / lune / astre** → l'ajouter au tableau `Détail des paramètres`.
+- **Nouveau concept transversal** (shaders, post-processing, audio…) → nouvelle section dans `Concepts clé`.
+- **Changement de formule de vitesse / distance** → mettre à jour `Vitesses — formules` ou `Distances des lunes JSON`.
+- **Nouvelle dépendance / commande npm** → mettre à jour `Vue d'ensemble`.
+
+Garder le document **factuel et concis** : si une info est dérivable du code (noms de fonctions, paramètres exacts), un pointeur `[fichier.js:ligne](chemin)` suffit. Le but est d'éviter de rescanner, pas de dupliquer le code.

@@ -11,7 +11,6 @@ import Uranus from './class/uranus.js';
 import Neptune from './class/neptune.js';
 import CeintureAsteroides from './class/asteroid_belt.js';
 import CeintureKuiper from './class/kuiper_belt.js';
-import Satellite from './class/satellite.js';
 import InfoBubble from './class/info_bubble.js';
 import HUD from './class/hud.js';
 import VRTutorial from './class/vr_tutorial.js';
@@ -57,26 +56,8 @@ ceinture.init();
 const jupiter = new Jupiter(espace.scene);
 jupiter.init();
 
-const io = new Satellite(espace.scene, jupiter.anchor, '/2k_moon.jpg', 0.3, 1.64, 1.03);
-io.init();
-const europa = new Satellite(espace.scene, jupiter.anchor, '/2k_moon.jpg', 0.28, 2.62, 0.51);
-europa.init();
-const ganymede = new Satellite(espace.scene, jupiter.anchor, '/2k_moon.jpg', 0.4, 4.18, 0.255);
-ganymede.init();
-const callisto = new Satellite(espace.scene, jupiter.anchor, '/2k_moon.jpg', 0.38, 7.35, 0.109);
-callisto.init();
-
 const saturne = new Saturne(espace.scene);
 saturne.init();
-
-const titan = new Satellite(espace.scene, saturne.anchor, '/2k_moon.jpg', 0.4, 4.77, 0.114);
-titan.init();
-const enceladus = new Satellite(espace.scene, saturne.anchor, '/2k_moon.jpg', 0.1, 0.93, 1.33);
-enceladus.init();
-const mimas = new Satellite(espace.scene, saturne.anchor, '/2k_moon.jpg', 0.08, 0.72, 1.94);
-mimas.init();
-const rhea = new Satellite(espace.scene, saturne.anchor, '/2k_moon.jpg', 0.15, 2.06, 0.404);
-rhea.init();
 
 const uranus = new Uranus(espace.scene);
 uranus.init();
@@ -88,8 +69,64 @@ neptune.init();
 const kuiper = new CeintureKuiper(espace.scene);
 kuiper.init();
 
+// Lunes de Jupiter et Saturne, pilotées par info_planete.json.
+// Le fichier JSON est servi par Vite depuis /public.
+const infoPlanetes = await fetch('/info_planete.json').then((r) => r.json());
+
+// Tailles visibles connues pour les lunes notables (en unités de scène).
+// Les autres reçoivent TAILLE_DEFAUT : volontairement minuscule, beaucoup
+// de ces lunes sont des cailloux de quelques dizaines de km.
+const TAILLE_LUNE = {
+  Io: 0.16, Europa: 0.14, Ganymede: 0.21, Callisto: 0.20,
+  Amalthea: 0.06, Himalia: 0.05,
+  Titan: 0.20, Rhea: 0.10, Iapetus: 0.10, Dione: 0.09,
+  Tethys: 0.09, Enceladus: 0.06, Mimas: 0.05, Hyperion: 0.05, Phoebe: 0.05,
+};
+const TAILLE_DEFAUT = 0.035;
+
+// Vitesse angulaire à l'écran : K / |période en jours|, bornée pour rester
+// lisible. Sans VITESSE_MIN, les lunes externes (Sinopé 759j, Phoebe 550j...)
+// tournent à ~7e-5 rad/frame et paraissent figées à l'œil.
+// Le signe négatif d'orbital_period encode l'orbite rétrograde.
+const K_LUNE = 0.05;
+const VITESSE_MIN = 0.003;
+const VITESSE_MAX = 0.08;
+
+function vitesseAngulaire(periode) {
+  if (!periode) return 0;
+  const v = K_LUNE / Math.abs(periode);
+  return Math.sign(periode) * Math.min(VITESSE_MAX, Math.max(VITESSE_MIN, v));
+}
+
+// Mappage logarithmique des distances réelles (km) vers la plage visible
+// [rmin, rmax]. Compresse l'énorme dynamique (Métis 1.3e5 km, Sinopé 2.4e7 km)
+// dans l'espace disponible entre la planète et sa voisine.
+function ajouterLunes(planeteData, planeteAstre, rmin, rmax) {
+  const distances = planeteData.moons.map((m) => m.distance);
+  const logMin = Math.log10(Math.min(...distances));
+  const logMax = Math.log10(Math.max(...distances));
+
+  return planeteData.moons.map((m) => {
+    const t = logMax === logMin ? 0.5 : (Math.log10(m.distance) - logMin) / (logMax - logMin);
+    const lune = new Lune(espace.scene, planeteAstre.anchor, {
+      rayon: TAILLE_LUNE[m.name] ?? TAILLE_DEFAUT,
+      distanceOrbite: rmin + t * (rmax - rmin),
+      vitesseOrbite: vitesseAngulaire(m.orbital_period),
+      vitesseRotation: vitesseAngulaire(m.rotation_period ?? m.orbital_period),
+      ombre: false,
+    });
+    lune.init();
+    return lune;
+  });
+}
+
+// Bornes visuelles : Jupiter (rayon 2.2) à 20, Saturne (rayon 1.9, anneaux jusqu'à 4.18) à 25,
+// Uranus à 33. On garde une marge pour ne pas chevaucher la planète voisine.
+const lunesJupiter = ajouterLunes(infoPlanetes.jupiter, jupiter, 2.6, 4.5);
+const lunesSaturne = ajouterLunes(infoPlanetes.saturn, saturne, 4.5, 6.5);
+
 // On regroupe tous les astres pour pouvoir les mettre à jour en une seule boucle.
-const astres = [soleil, mercure, venus, terre, lune, mars, ceinture, jupiter, io, europa, ganymede, callisto, saturne, titan, enceladus, mimas, rhea, uranus, neptune, kuiper];
+const astres = [soleil, mercure, venus, terre, lune, mars, ceinture, jupiter, saturne, uranus, neptune, kuiper, ...lunesJupiter, ...lunesSaturne];
 
 // === Ombres isolées par système planétaire ===
 // Avec une seule PointLight au Soleil, l'ombre d'une lune se projette le long
