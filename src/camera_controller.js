@@ -1,164 +1,82 @@
 import * as THREE from 'three';
 import { ECHELLE } from './class/astre.js';
 
-// Gère tout ce qui concerne la caméra et les manettes VR :
-//  - création des contrôleurs WebXR (avec rayon laser visible, portée courte)
-//  - sélection d'un astre par raycast au trigger (portée 30 unités)
-//  - pilotage 6DoF "vaisseau spatial" aux deux joysticks
-//  - boutons A / B pour accélérer / ralentir le temps
-//  - suivi (orbital) du rig caméra autour de l'astre sélectionné
-//
-// Le rig appartient à Espace ; on s'y attache pour que les manettes
-// suivent la caméra lors d'un déplacement.
-//
-// Mapping des contrôles VR (en session XR uniquement) :
-//   Stick gauche X  -> translation latérale (gauche/droite)
-//   Stick gauche Y  -> avancer / reculer (selon la direction du regard)
-//   Stick droit  X  -> rotation yaw (faire pivoter le rig autour de l'axe Y)
-//   Stick droit  Y  -> monter / descendre
-//   Bouton A (droit) -> timeScale +
-//   Bouton B (droit) -> timeScale -
-//   Bouton X (droit) -> basculer vue détaillée
-//   Gâchette        -> sélection au laser (raycast 30u)
-// Portée du raycaster mise à l'échelle : avec un système agrandi, on doit
-// pouvoir viser une planète d'un peu plus loin sans pour autant rendre la
-// sélection trop facile depuis le Soleil.
+// Gère les déplacements de la caméra (rig), le suivi orbital des astres
+// et le raycast de sélection (à la gâchette).
+// Délégué pour les aspects matériels :
+//  - VRInputManager : pour les contrôleurs WebXR, lasers, joysticks et boutons.
+//  - RocketAudio : pour le retour sonore de propulsion (Web Audio).
 const PORTEE_RAYCASTER = 30 * ECHELLE;
-const DEADZONE_STICK = 0.15;
 
 export default class CameraController {
-  constructor(espace, astres, infoBubble, detailedView, hud, tutorial, hyperespace, messageBienvenue) {
+  constructor(espace, astres, infoBubble, detailedView, hud, tutorial, hyperespace, messageBienvenue, vrInput, rocketAudio) {
     this.espace = espace;
     this.astres = astres;
     this.infoBubble = infoBubble;
     this.detailedView = detailedView;
     this.hud = hud;
-    // Panneau d'aide affiché au début de chaque session VR. Tant qu'il
-    // est visible, _handleVRInput et _onSelect court-circuitent : pas
-    // de mouvement ni de sélection avant que l'utilisateur ait validé
-    // d'un coup de gâchette.
+    
+    // Panneau d'aide au début de la session VR
     this.tutorial = tutorial;
-    // Animation d'entrée VR : tunnel d'hyperespace affiché autour du
-    // casque tant que le tutoriel est ouvert ; fade out à la validation.
+    // Animation d'entrée VR (tunnel d'hyperespace)
     this.hyperespace = hyperespace;
-    // Message "Bienvenue dans le système solaire" qui apparaît juste
-    // après la sortie d'hyperespace, puis se cache tout seul.
+    // Message de bienvenue
     this.messageBienvenue = messageBienvenue;
+
+    // Nouvelles classes injectées pour la factorisation
+    this.vrInput = vrInput;
+    this.rocketAudio = rocketAudio;
+
     this.raycaster = new THREE.Raycaster();
-    // Portée du raycaster : le but est de forcer l'utilisateur à
-    // s'approcher d'une planète pour pouvoir la sélectionner.
     this.raycaster.far = PORTEE_RAYCASTER;
-    // On autorise toutes les couches : les planètes à lunes (Terre, Jupiter,
-    // Saturne) sont isolées sur des couches dédiées pour les ombres, et
-    // doivent rester sélectionnables au laser.
     this.raycaster.layers.enableAll();
 
     this.trackedAstre = null;
-    // Position monde de l'astre suivi à la frame précédente :
-    // sert à appliquer le déplacement orbital de la planète au rig
-    // (on reste "en orbite" même quand la planète bouge autour du Soleil).
     this._lastTrackedPos = null;
-    // Orbite autour de la planète sélectionnée : angle en radians pour la rotation.
     this._angleOrbite = 0;
-    // Distance d'orbite (rayon de la "lune" de la caméra autour de la planète).
     this._distanceOrbite = 0;
 
     this.timeScale = 1;
-    // Callback optionnel pour synchroniser une UI externe (slider HTML)
-    // quand le joystick modifie timeScale.
     this.onTimeScaleChange = null;
-
-    // Horloge pour avoir un dt réel (mouvement frame-rate independent).
     this._horloge = new THREE.Clock();
 
-    // Audio "fusée" via Web Audio API : on charge le clip dans un buffer
-    // puis on joue UNIQUEMENT la portion sustain en boucle (loopStart
-    // /loopEnd), sinon on entendrait l'attaque et la décroissance du
-    // décollage à chaque rebouclage. Un GainNode contrôle le volume
-    // (0 quand l'utilisateur n'appuie sur aucun stick).
-    this._audioContext = null;
-    this._audioGain = null;
-    this._audioSource = null;
-    this._volumeFuseeCible = 0;
-    this._chargerAudioFusee('/jci21-rocket-launch-sfx-253937.mp3');
+    // Liaison du callback de sélection
+    if (this.vrInput) {
+      this.vrInput.onSelect = (event) => this._onSelect(event);
+    }
 
-    // État du bouton X pour détecter les appuis (et non pas tenir le bouton).
-    this._xPrecedent = false;
-
-    this._initControllers();
     this._initTutorialEvents();
   }
 
   // Affiche le tutoriel au début de chaque session VR et le cache à la fin.
-  // Le `sessionend` est utile au cas où l'utilisateur quitterait la VR
-  // sans avoir validé : la prochaine entrée doit repartir du tutoriel.
   _initTutorialEvents() {
     if (!this.tutorial) return;
     const xr = this.espace.renderer.xr;
     xr.addEventListener('sessionstart', () => {
       // Téléporte le rig juste à l'extérieur de la ceinture de Kuiper
-      // (rayon 80-100) pour que l'utilisateur "arrive" dans le système
-      // solaire et le découvre de loin. La caméra étant écrasée par la
-      // pose du casque en XR, on doit déplacer le rig (pas la caméra).
-      // L'orientation par défaut du casque est -Z, donc avec un rig à
-      // z=+120 le regard pointe naturellement vers le Soleil au centre.
       this.espace.rig.position.set(0, 30 * ECHELLE, 120 * ECHELLE);
       this.espace.rig.rotation.set(0, 0, 0);
-      // Réinitialise aussi l'état de suivi : pas d'astre tracké au
-      // démarrage, sinon le rig serait happé vers la dernière sélection.
+      
       this.trackedAstre = null;
       this._lastTrackedPos = null;
-      this._approcheInitiale = false;
-      this._dirApproche = null;
       this.tutorial.show();
-      // Tunnel d'hyperespace synchronisé avec l'affichage du tutoriel :
-      // l'utilisateur "arrive" en hyperespace, lit les contrôles, puis
-      // valide pour sortir.
+      
       if (this.hyperespace) this.hyperespace.show();
-      // Au cas où une session précédente aurait laissé le message visible.
       if (this.messageBienvenue) this.messageBienvenue.hide();
     });
+
     xr.addEventListener('sessionend', () => {
       this.tutorial.hide();
       if (this.hyperespace) {
         this.hyperespace.hide();
-        // Coupe forcé : si l'utilisateur quitte la VR pendant le bruit
-        // de sortie, on ne veut pas que le son continue après.
         this.hyperespace.arreterAudio();
       }
       if (this.messageBienvenue) this.messageBienvenue.hide();
     });
   }
 
-  _initControllers() {
-    const c1 = this.espace.renderer.xr.getController(0);
-    const c2 = this.espace.renderer.xr.getController(1);
-
-    // Laser raccourci à la portée du raycaster pour que l'utilisateur
-    // voie immédiatement jusqu'où il peut sélectionner.
-    const rayGeometry = new THREE.BufferGeometry().setFromPoints([
-      new THREE.Vector3(0, 0, 0),
-      new THREE.Vector3(0, 0, -PORTEE_RAYCASTER),
-    ]);
-    const rayMaterial = new THREE.LineBasicMaterial({ color: 0x00ff00 });
-
-    for (const controller of [c1, c2]) {
-      if (!controller) continue;
-      const line = new THREE.Line(rayGeometry, rayMaterial);
-      line.name = 'line';
-      controller.add(line);
-      // Attaché au rig (et non à la scène) pour que les manettes suivent
-      // la caméra quand on téléporte le rig vers une planète.
-      this.espace.rig.add(controller);
-      controller.addEventListener('select', (e) => this._onSelect(e));
-    }
-  }
-
   _onSelect(event) {
-    // Si le tutoriel est visible, la première gâchette sert juste à le
-    // fermer : on ne fait pas de raycast, et on ne change pas trackedAstre.
-    // C'est aussi le moment où on déclenche la sortie d'hyperespace et
-    // où on affiche le message de bienvenue.
+    // Si le tutoriel est visible, la première gâchette sert juste à le fermer
     if (this.tutorial && this.tutorial.visible) {
       this.tutorial.hide();
       if (this.hyperespace) this.hyperespace.startSortie();
@@ -182,11 +100,10 @@ export default class CameraController {
         this.trackedAstre = object.userData.astre;
         this._lastTrackedPos = null; // recalculé à la prochaine frame
 
-        // Initialise l'orbite : distance = portée du laser + rayon de la planète.
-        // La caméra devient une "lune" qui tourne autour de la planète.
+        // Initialise l'orbite : distance = portée du laser + rayon de la planète
         this._distanceOrbite = PORTEE_RAYCASTER + this.trackedAstre.rayon;
 
-        // Angle d'orbite basé sur la direction actuelle rig↔planète.
+        // Angle d'orbite basé sur la direction actuelle rig↔planète
         const posAstre = new THREE.Vector3();
         this.trackedAstre.mesh.getWorldPosition(posAstre);
         const posRig = this.espace.rig.position;
@@ -197,15 +114,13 @@ export default class CameraController {
         this.detailedView.hide();
         if (this.hud) this.hud.setOrbit(this.trackedAstre.nom);
 
-        // Flash rouge sur la ligne pour confirmer la sélection.
-        const line = controller.getObjectByName('line');
-        if (line) line.material.color.set(0xff0000);
-        setTimeout(() => {
-          if (line) line.material.color.set(0x00ff00);
-        }, 300);
+        // Flash rouge de confirmation sur le laser
+        if (this.vrInput) {
+          this.vrInput.flashLaser(controller);
+        }
       }
     } else {
-      // Clic dans le vide (ou hors portée du raycaster) = annuler le tracking.
+      // Clic dans le vide = annuler le tracking
       this.trackedAstre = null;
       this._lastTrackedPos = null;
       this._angleOrbite = 0;
@@ -216,8 +131,7 @@ export default class CameraController {
     }
   }
 
-  // Calcule les vecteurs forward et right (droite) de la caméra en coordonnées monde.
-  // Right = forward × up, avec un cas limite pour quand la caméra regarde droit haut/bas.
+  // Calcule les vecteurs forward et right (droite) de la caméra en coordonnées monde
   _calculerVecteursCaméra() {
     const camera = this.espace.camera;
     const forward = new THREE.Vector3();
@@ -234,188 +148,84 @@ export default class CameraController {
     return { forward, right };
   }
 
-  // Vitesse de translation adaptée à la distance au Soleil.
-  // Près du Soleil : vitesse plancher pour rester réactif.
-  // Loin du Soleil : vitesse augmente avec la distance (40% de distance/sec).
+  // Vitesse de translation adaptée à la distance au Soleil
   _calculerVitesseTranslation() {
     const distAuCentre = this.espace.rig.position.length();
     return Math.max(8 * ECHELLE, distAuCentre * 0.4);
   }
 
-  // Traite les inputs du joystick gauche : translation latérale et avant/arrière.
-  _traiterJoystickGauche(xAxis, yAxis, vitesseTrans, dt, camForward, camRight) {
-    let bougeManuellement = false;
+  // Pilotage VR : interprétation de l'état des entrées
+  _handleVRInput(dt) {
+    if (!this.vrInput) return false;
+
+    const vrState = this.vrInput.getState();
+    const session = this.espace.renderer.xr.getSession();
+
+    // Si pas de session active ou tutoriel affiché -> no-op
+    if (!session || (this.tutorial && this.tutorial.visible)) {
+      if (this.rocketAudio) this.rocketAudio.setVolumeCible(0);
+      return false;
+    }
+
+    const { forward: camForward, right: camRight } = this._calculerVecteursCaméra();
+    const vitesseTrans = this._calculerVitesseTranslation();
     const rig = this.espace.rig;
 
-    if (xAxis !== 0) {
-      rig.position.addScaledVector(camRight, xAxis * vitesseTrans * dt);
-      bougeManuellement = true;
-    }
-    if (yAxis !== 0) {
-      rig.position.addScaledVector(camForward, -yAxis * vitesseTrans * dt);
-      bougeManuellement = true;
-    }
-
-    return { bougeManuellement, intensitePoussee: Math.hypot(xAxis, yAxis) };
-  }
-
-  // Traite les inputs du joystick droit : rotation (yaw) et altitude.
-  // Inclut aussi les boutons A/B (timeScale) et X (vue détaillée).
-  _traiterJoystickDroit(xAxis, yAxis, vitesseTrans, dt, gamepad) {
     let bougeManuellement = false;
-    let intensitePoussee = 0;
-    const rig = this.espace.rig;
 
-    // Yaw : rotation autour de l'axe vertical du monde.
-    if (xAxis !== 0) {
-      rig.rotation.y -= xAxis * 1.5 * dt; // 1.5 rad/sec
-    }
-
-    // Altitude : monter/descendre dans l'espace monde.
-    if (yAxis !== 0) {
-      rig.position.y -= yAxis * vitesseTrans * dt;
+    // Translation horizontale (Stick gauche)
+    if (vrState.translation.x !== 0) {
+      rig.position.addScaledVector(camRight, vrState.translation.x * vitesseTrans * dt);
       bougeManuellement = true;
     }
-    intensitePoussee = Math.abs(yAxis);
+    if (vrState.translation.y !== 0) {
+      rig.position.addScaledVector(camForward, -vrState.translation.y * vitesseTrans * dt);
+      bougeManuellement = true;
+    }
 
-    // Boutons A/B : modifient timeScale progressivement.
-    const boutonA = gamepad.buttons[4]?.pressed;
-    const boutonB = gamepad.buttons[5]?.pressed;
-    if (boutonA) {
+    // Rotation Yaw (Stick droit X)
+    if (vrState.rotation.x !== 0) {
+      rig.rotation.y -= vrState.rotation.x * 1.5 * dt;
+    }
+
+    // Altitude (Stick droit Y)
+    if (vrState.vertical !== 0) {
+      rig.position.y -= vrState.vertical * vitesseTrans * dt;
+      bougeManuellement = true;
+    }
+
+    // Boutons A/B (timeScale)
+    if (vrState.boutons.A) {
       this.timeScale = Math.min(2, this.timeScale + 0.6 * dt);
       if (this.onTimeScaleChange) this.onTimeScaleChange(this.timeScale);
     }
-    if (boutonB) {
+    if (vrState.boutons.B) {
       this.timeScale = Math.max(0, this.timeScale - 0.6 * dt);
       if (this.onTimeScaleChange) this.onTimeScaleChange(this.timeScale);
     }
 
-    // Bouton X : bascule la vue détaillée de l'astre sélectionné.
-    const boutonX = gamepad.buttons[2];
-    if (boutonX && boutonX.pressed && !this._xPrecedent) {
-      if (this.trackedAstre) {
-        if (this.detailedView.visible) {
-          this.detailedView.hide();
-        } else {
-          this.detailedView.show(this.trackedAstre);
-        }
-      }
-    }
-    this._xPrecedent = boutonX?.pressed || false;
-
-    return { bougeManuellement, intensitePoussee };
-  }
-
-  // Pilotage VR aux deux joysticks + boutons A/B.
-  // Hors session XR : no-op (le slider HTML reste la seule entrée).
-  // Retourne true si l'utilisateur a donné une input de mouvement
-  // (translation ou altitude), pour que update() puisse savoir si
-  // le pilotage manuel doit primer sur l'approche automatique.
-  _handleVRInput(dt) {
-    this._volumeFuseeCible = 0;
-
-    const session = this.espace.renderer.xr.getSession();
-    if (!session) return false;
-
-    // Tutoriel : bloque tout pilotage et timeScale.
-    if (this.tutorial && this.tutorial.visible) return false;
-
-    // Vecteurs de mouvement de la caméra.
-    const { forward: camForward, right: camRight } = this._calculerVecteursCaméra();
-    const vitesseTrans = this._calculerVitesseTranslation();
-
-    let bougeManuellement = false;
-    let intensitePousseeGauche = 0;
-    let intensitePousseeVerticale = 0;
-
-    // Parcours les entrées XR (manettes gauche et droite).
-    for (const source of session.inputSources) {
-      if (!source.gamepad) continue;
-      const gp = source.gamepad;
-      const hand = source.handedness;
-
-      // Axes 2 (X) et 3 (Y) : thumbstick principal de la manette.
-      const xRaw = gp.axes.length >= 4 ? gp.axes[2] : 0;
-      const yRaw = gp.axes.length >= 4 ? gp.axes[3] : 0;
-      const xAxis = Math.abs(xRaw) > DEADZONE_STICK ? xRaw : 0;
-      const yAxis = Math.abs(yRaw) > DEADZONE_STICK ? yRaw : 0;
-
-      if (hand === 'left') {
-        const res = this._traiterJoystickGauche(xAxis, yAxis, vitesseTrans, dt, camForward, camRight);
-        bougeManuellement = bougeManuellement || res.bougeManuellement;
-        intensitePousseeGauche = res.intensitePoussee;
-      } else if (hand === 'right') {
-        const res = this._traiterJoystickDroit(xAxis, yAxis, vitesseTrans, dt, gp);
-        bougeManuellement = bougeManuellement || res.bougeManuellement;
-        intensitePousseeVerticale = res.intensitePoussee;
+    // Bouton X (Vue Détaillée)
+    if (vrState.boutons.X && this.trackedAstre) {
+      if (this.detailedView.visible) {
+        this.detailedView.hide();
+      } else {
+        this.detailedView.show(this.trackedAstre);
       }
     }
 
-    // Accumule l'intensité de poussée (joysticks de translation).
+    // Intensité de poussée pour la fusée (joysticks de translation + vertical)
+    const intensitePousseeGauche = Math.hypot(vrState.translation.x, vrState.translation.y);
+    const intensitePousseeVerticale = Math.abs(vrState.vertical);
     const intensitePoussee = Math.min(1, intensitePousseeGauche + intensitePousseeVerticale);
-    this._volumeFuseeCible = intensitePoussee * 0.6; // 60% du volume max.
+
+    if (this.rocketAudio) {
+      this.rocketAudio.setVolumeCible(intensitePoussee * 0.6);
+    }
 
     return bougeManuellement;
   }
 
-  // Charge le MP3, décode en AudioBuffer, et démarre une source en boucle
-  // sur la portion sustain. Le gain reste à 0 jusqu'à ce que l'utilisateur
-  // pousse un stick. Tout est asynchrone : si la décode échoue ou prend
-  // du temps, l'audio sera simplement silencieux jusqu'à ce que ce soit prêt.
-  async _chargerAudioFusee(url) {
-    try {
-      const ctx = new (window.AudioContext || window.webkitAudioContext)();
-      const reponse = await fetch(url);
-      const buffer = await reponse.arrayBuffer();
-      const audioBuffer = await ctx.decodeAudioData(buffer);
-
-      const gain = ctx.createGain();
-      gain.gain.value = 0;
-      gain.connect(ctx.destination);
-
-      const source = ctx.createBufferSource();
-      source.buffer = audioBuffer;
-      source.loop = true;
-      // Boucle sur la zone "sustain" : on évite le whoosh d'attaque
-      // (premiers 20% du clip) et la queue qui s'éteint (derniers 30%).
-      // Tu peux ajuster ces ratios si la portion choisie sonne mal.
-      const dur = audioBuffer.duration;
-      source.loopStart = dur * 0.2;
-      source.loopEnd = dur * 0.7;
-      // On démarre la lecture directement dans la zone de loop : pas
-      // d'attaque audible au premier coup de stick.
-      source.connect(gain);
-      source.start(0, source.loopStart);
-
-      this._audioContext = ctx;
-      this._audioGain = gain;
-      this._audioSource = source;
-    } catch (e) {
-      console.warn('Audio fusée indisponible :', e);
-    }
-  }
-
-  // Lerp doux du volume vers la cible. Reprend l'AudioContext si le
-  // navigateur l'a suspendu (politique d'autoplay) — ça finit par marcher
-  // dès qu'un geste utilisateur a eu lieu (clic VR, trigger, etc.).
-  _updateAudioFusee() {
-    if (!this._audioGain || !this._audioContext) return;
-
-    if (this._audioContext.state === 'suspended') {
-      this._audioContext.resume().catch(() => {});
-    }
-
-    const v = this._audioGain.gain.value;
-    const cible = this._volumeFuseeCible;
-    // Lissage exponentiel (~150ms à 60fps) : pas de pop quand on lâche le stick.
-    const nouveau = v + (cible - v) * 0.15;
-    this._audioGain.gain.value = Math.max(0, Math.min(1, nouveau));
-  }
-
-  // Applique au rig le déplacement orbital de la planète.
-  // Si la planète s'est déplacée depuis la frame précédente (elle tourne autour
-  // du Soleil), le rig suit ce mouvement → on reste "en orbite" relativement
-  // à la planète, même si sa position monde change.
+  // Applique au rig le déplacement orbital de la planète
   _mettreAJourSuiviOrbital(posAstreActuelle) {
     if (this._lastTrackedPos) {
       const delta = posAstreActuelle.clone().sub(this._lastTrackedPos);
@@ -424,18 +234,14 @@ export default class CameraController {
     this._lastTrackedPos = posAstreActuelle.clone();
   }
 
-  // Quand l'utilisateur ne pilote pas manuellement, la caméra orbite
-  // lentement autour de la planète sélectionnée (comme une "lune").
-  // Vitesse : ~0.3 rad/sec = tour complet en ~20 secondes.
+  // Quand l'utilisateur ne pilote pas manuellement, la caméra orbite lentement autour de la planète
   _mettreAJourOrbiteAutomatique(posAstre, bougeManuellement, dt) {
     if (bougeManuellement || this._distanceOrbite <= 0) {
-      return; // L'utilisateur pilote ou pas d'orbite définie.
+      return;
     }
 
     this._angleOrbite += 0.3 * dt;
 
-    // Position orbitale : cercle horizontal autour de la planète,
-    // à la même hauteur (Y) que le rig.
     const posRig = this.espace.rig.position;
     const decalageX = Math.cos(this._angleOrbite) * this._distanceOrbite;
     const decalageZ = Math.sin(this._angleOrbite) * this._distanceOrbite;
@@ -446,7 +252,6 @@ export default class CameraController {
       posAstre.z + decalageZ
     );
 
-    // Lerp doux pour un mouvement fluide (ne pas téléporter le rig).
     this.espace.rig.position.lerp(cibleOrbite, 0.05);
   }
 
@@ -454,30 +259,28 @@ export default class CameraController {
     this.timeScale = v;
   }
 
-  // À appeler une fois par frame depuis la boucle d'animation.
   update() {
-    const dt = Math.min(0.1, this._horloge.getDelta()); // clamp anti-pic
+    const dt = Math.min(0.1, this._horloge.getDelta());
 
     const bougeManuellement = this._handleVRInput(dt);
-    this._updateAudioFusee();
 
-    // Tutoriel : repositionné chaque frame devant la caméra. Le Sprite
-    // étant déjà un billboard, il reste face à l'utilisateur.
+    if (this.rocketAudio) {
+      this.rocketAudio.update();
+    }
+
+    // Mise à jour des overlays
     if (this.tutorial) this.tutorial.update(this.espace.camera);
-    // Tunnel d'hyperespace : suit la position du casque, fade out auto.
     if (this.hyperespace) {
       this.hyperespace.update(dt, this.espace.camera, this.espace.rig);
     }
-    // Message de bienvenue : machine à états (fadeIn/visible/fadeOut).
     if (this.messageBienvenue) {
       this.messageBienvenue.update(dt, this.espace.camera);
     }
-
-    // Vue détaillée : mise à jour du positionnement et rendu du modèle 3D.
     if (this.detailedView) {
       this.detailedView.update();
     }
 
+    // Suivi et orbite
     if (this.trackedAstre) {
       const posAstre = new THREE.Vector3();
       this.trackedAstre.mesh.getWorldPosition(posAstre);

@@ -20,6 +20,8 @@ import MessageBienvenue from './class/message_bienvenue.js';
 import PoussiereSpatiale from './class/poussiere_spatiale.js';
 import DetailedView from './class/detailed_view.js';
 import CameraController from './camera_controller.js';
+import RocketAudio from './class/rocket_audio.js';
+import VRInputManager from './class/vr_input_manager.js';
 import * as THREE from 'three';
 import './style.css';
 
@@ -144,7 +146,23 @@ const messageBienvenue = new MessageBienvenue(espace.scene);
 // Poussière spatiale : nuage de points qui suit le joueur, donne une
 // sensation de vitesse et d'échelle quand on se déplace au stick.
 const poussiere = new PoussiereSpatiale(espace.scene);
-const cameraController = new CameraController(espace, astres, infoBubble, detailedView, hud, vrTutorial, hyperespace, messageBienvenue);
+
+// Nouvelles instances factorisées pour la gestion des périphériques et du son
+const vrInput = new VRInputManager(espace);
+const rocketAudio = new RocketAudio();
+
+const cameraController = new CameraController(
+  espace, 
+  astres, 
+  infoBubble, 
+  detailedView, 
+  hud, 
+  vrTutorial, 
+  hyperespace, 
+  messageBienvenue,
+  vrInput,
+  rocketAudio
+);
 
 // UI 2D : slider HTML <-> timeScale du contrôleur, dans les deux sens.
 const speedSlider = document.getElementById('speed-slider');
