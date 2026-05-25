@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { VRButton } from 'three/addons/webxr/VRButton.js';
+import { ECHELLE } from './class/astre.js';
 
 // La classe Espace possède l'unique scène, caméra et renderer.
 // Tous les astres (Soleil, Terre, Lune) viendront s'ajouter à cette scène.
@@ -21,11 +22,13 @@ export default class Espace {
     const ambiante = new THREE.AmbientLight(0xffffff, 0.08);
     this.scene.add(ambiante);
 
+    // Far plane mis à l'échelle (pour rester correct si on rejoue avec ECHELLE).
+    // 1000 * ECHELLE laisse une marge confortable au-delà de Kuiper (rayon ~100).
     this.camera = new THREE.PerspectiveCamera(
       60,
       window.innerWidth / window.innerHeight,
       0.1,
-      1000,
+      1000 * ECHELLE,
     );
     // On met la caméra dans un "rig" pour pouvoir la déplacer en VR et PC.
     this.rig = new THREE.Group();
@@ -33,9 +36,20 @@ export default class Espace {
     this.scene.add(this.rig);
     this.rig.add(this.camera);
     
-    // Vue depuis au-dessus du plan orbital (axe Y).
-    this.camera.position.set(0, 150, 0); // La caméra est en hauteur par rapport au rig
-    this.camera.lookAt(0, 0, 0); // Regarder vers le centre du rig
+    // Vue d'arrivée : on apparaît juste à l'extérieur de la ceinture
+    // de Kuiper (rayon 80-100, cf. kuiper_belt.js), légèrement au-dessus
+    // du plan orbital, pour donner l'impression de venir d'ailleurs et
+    // de découvrir le système solaire de loin.
+    // En VR, c'est le rig qu'on téléporte (cf. CameraController), parce
+    // que la position de la caméra est écrasée par la pose du casque.
+    this.camera.position.set(0, 30 * ECHELLE, 120 * ECHELLE);
+    this.camera.lookAt(0, 0, 0); // Regarder vers le Soleil
+
+    // Active toutes les couches : on isole chaque système planétaire
+    // (planète + ses lunes) sur une couche dédiée pour que les ombres des
+    // lunes ne tombent que sur leur planète. La caméra doit voir toutes ces
+    // couches, sinon les planètes "isolées" disparaîtraient à l'écran.
+    this.camera.layers.enableAll();
 
     // 3. Le renderer : un seul <canvas> pour tout le monde
     this.renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -45,11 +59,30 @@ export default class Espace {
     // (un peu plus coûteux mais bien plus joli que les ombres "pixelisées").
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    // Tone mapping ACES : compresse les hautes valeurs (HDR) vers le 0-1
+    // affichable au lieu de cramer en blanc pur. Sans ça, les planètes
+    // proches du Soleil (Mercure, Vénus) reçoivent une luminosité bien
+    // supérieure à 1.0 et apparaissent complètement saturées.
+    // toneMappingExposure = 1.0 = neutre ; baisser = scène plus sombre.
+    this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    this.renderer.toneMappingExposure = 1.0;
     // Activer le support WebXR (indispensable pour le mode VR).
     this.renderer.xr.enabled = true;
     document.body.appendChild(this.renderer.domElement);
     // Bouton "Enter VR" ajouté automatiquement par Three.js.
-    document.body.appendChild(VRButton.createButton(this.renderer));
+    const vrButton = VRButton.createButton(this.renderer);
+    document.body.appendChild(vrButton);
+
+    // Gérer les erreurs WebXR (ex. : émulateur Meta qui ne supporte pas XRWebGLBinding)
+    window.addEventListener('unhandledrejection', (event) => {
+      if (event.reason?.message?.includes('XRWebGLBinding')) {
+        event.preventDefault();
+        console.warn('L\'émulateur WebXR ne supporte pas XRWebGLBinding. Utilisez un casque VR réel.');
+        vrButton.textContent = 'VR non supporté (utilisez un casque réel)';
+        vrButton.style.opacity = '0.5';
+        vrButton.style.cursor = 'not-allowed';
+      }
+    });
 
     // 4. OrbitControls : permet de déplacer la caméra à la souris.
     //    - clic gauche + glisser : rotation autour du centre
@@ -61,8 +94,8 @@ export default class Espace {
     // Si activé, il faut appeler controls.update() à chaque frame (voir render()).
     this.controls.enableDamping = true;
     // Bornes de zoom pour éviter de partir trop loin ou de rentrer dans le Soleil.
-    this.controls.minDistance = 3;
-    this.controls.maxDistance = 250;
+    this.controls.minDistance = 3 * ECHELLE;
+    this.controls.maxDistance = 250 * ECHELLE;
 
     // 5. Garder un rendu correct si la fenêtre est redimensionnée
     window.addEventListener('resize', () => {
@@ -79,3 +112,4 @@ export default class Espace {
     this.renderer.render(this.scene, this.camera);
   }
 }
+

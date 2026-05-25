@@ -12,6 +12,8 @@ export default class Venus extends Astre {
       distanceOrbite: 5.5,
       vitesseOrbite: 0.00813,   // 0.005 × 365.25 / 224.7 jours
       inclinaison: 177.4,        // axe quasi inversé -> rotation rétrograde
+      nom: "Vénus",
+      info: "La planète la plus chaude du système solaire, une planète rocheuse enveloppée d'une épaisse atmosphère de dioxyde de carbone avec des nuages d'acide sulfurique, et une rotation rétrograde très lente."
     });
   }
 }

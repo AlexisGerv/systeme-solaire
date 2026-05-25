@@ -10,6 +10,8 @@ export default class Mercure extends Astre {
       distanceOrbite: 3.5,
       vitesseOrbite: 0.02074,   // 0.005 × 365.25 / 88 jours
       inclinaison: 0.034,
+      nom: "Mercure",
+      info: "La planète la plus proche du Soleil, une petite planète rocheuse avec des températures extrêmes et de nombreux cratères d'impact."
     });
   }
 }

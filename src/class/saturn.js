@@ -13,6 +13,8 @@ export default class Saturne extends Astre {
       distanceOrbite: 34,
       vitesseOrbite: 0.00017,   // 0.005 × 365.25 / 10759.2 jours
       inclinaison: 26.73,
+      nom: "Saturne",
+      info: "La deuxième plus grosse planète du système solaire, une géante gazeuse célèbre pour ses magnifiques anneaux composés de glace et de roche."
     });
   }
 

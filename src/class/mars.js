@@ -10,6 +10,8 @@ export default class Mars extends Astre {
       distanceOrbite: 12,
       vitesseOrbite: 0.00266,   // 0.005 × 365.25 / 687 jours
       inclinaison: 25.19,
+      nom: "Mars",
+      info: "La planète rouge, une planète rocheuse avec des calottes polaires de glace sèche et de l'eau gelée, et la plus grande montagne du système solaire, Olympus Mons."
     });
   }
 }

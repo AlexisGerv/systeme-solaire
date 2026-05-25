@@ -1,4 +1,3 @@
-import * as THREE from 'three';
 import Espace from './espace.js';
 import Soleil from './class/sun.js';
 import Mercure from './class/mercury.js';
@@ -13,6 +12,14 @@ import Neptune from './class/neptune.js';
 import CeintureAsteroides from './class/asteroid_belt.js';
 import CeintureKuiper from './class/kuiper_belt.js';
 import InfoBubble from './class/info_bubble.js';
+import HUD from './class/hud.js';
+import VRTutorial from './class/vr_tutorial.js';
+import HyperEspace from './class/hyperespace.js';
+import MessageBienvenue from './class/message_bienvenue.js';
+import PoussiereSpatiale from './class/poussiere_spatiale.js';
+import DetailedView from './class/detailed_view.js';
+import CameraController from './camera_controller.js';
+import * as THREE from 'three';
 import './style.css';
 
 // 1. On crée l'espace : il possède la scène, la caméra et le renderer
@@ -121,127 +128,98 @@ const lunesSaturne = ajouterLunes(infoPlanetes.saturn, saturne, 4.5, 6.5);
 // On regroupe tous les astres pour pouvoir les mettre à jour en une seule boucle.
 const astres = [soleil, mercure, venus, terre, lune, mars, ceinture, jupiter, saturne, uranus, neptune, kuiper, ...lunesJupiter, ...lunesSaturne];
 
-// Configuration du raycaster et de l'interaction VR
-const raycaster = new THREE.Raycaster();
-const infoBubble = new InfoBubble(espace.scene);
-let trackedAstre = null; // L'astre actuellement suivi en VR
+// === Ombres isolées par système planétaire ===
+// Avec une seule PointLight au Soleil, l'ombre d'une lune se projette le long
+// de la ligne Soleil → lune et peut atteindre n'importe quelle planète plus
+// loin sur cette ligne (ex: la Lune projetait son ombre sur Jupiter ou Saturne).
+// Pour empêcher ça : chaque système planète+lunes est placé sur une COUCHE
+// dédiée, et reçoit sa propre PointLight (co-localisée avec le Soleil) qui ne
+// "voit" que cette couche. La shadow map de cette lumière ne contient donc
+// que la planète et ses lunes — l'ombre ne peut tomber que sur la planète.
+//
+// ⚠ NE PAS utiliser les couches 1 et 2 : Three.js les réserve au rendu
+// stéréo WebXR (cf. WebXRManager.js : `cameraL.layers.mask &= ~0b100` et
+// `cameraR.layers.mask &= ~0b010`). Concrètement, un objet placé seul sur
+// la couche 1 n'est visible que par l'œil gauche, et un objet sur la couche
+// 2 n'est visible que par l'œil droit. On démarre donc à 3.
+function isolerSystemeOmbre(planete, couche) {
+  // 1. Bascule planète + ses lunes (sous le pivot) sur la couche dédiée.
+  //    set() (et non enable()) retire la couche 0, sinon la lumière globale
+  //    du Soleil les éclairerait DEUX fois (une via couche 0, une via couche N).
+  planete.pivot.traverse((obj) => obj.layers.set(couche));
 
-const controller1 = espace.renderer.xr.getController(0);
-const controller2 = espace.renderer.xr.getController(1);
-
-// Géométrie pour le rayon du contrôleur
-const rayGeometry = new THREE.BufferGeometry().setFromPoints([
-  new THREE.Vector3(0, 0, 0),
-  new THREE.Vector3(0, 0, -100)
-]);
-const rayMaterial = new THREE.LineBasicMaterial({ color: 0x00ff00 });
-
-if (controller1) {
-  const line = new THREE.Line(rayGeometry, rayMaterial);
-  line.name = 'line';
-  controller1.add(line);
-  espace.scene.add(controller1);
-  controller1.addEventListener('select', onSelect);
+  // 2. Lumière dédiée au Soleil pour ce système : seule à projeter des ombres
+  //    sur cette couche. Mêmes paramètres que la lumière globale du Soleil
+  //    pour conserver l'éclairage existant.
+  const lumiere = new THREE.PointLight(0xffffff, 10, 0, 1);
+  lumiere.layers.set(couche);
+  lumiere.castShadow = true;
+  lumiere.shadow.mapSize.width = 1024;
+  lumiere.shadow.mapSize.height = 1024;
+  soleil.pivot.add(lumiere);
 }
 
-if (controller2) {
-  const line = new THREE.Line(rayGeometry, rayMaterial);
-  line.name = 'line';
-  controller2.add(line);
-  espace.scene.add(controller2);
-  controller2.addEventListener('select', onSelect);
-}
+isolerSystemeOmbre(terre, 3);
+isolerSystemeOmbre(jupiter, 4);
+isolerSystemeOmbre(saturne, 5);
 
-function onSelect(event) {
-  const controller = event.target;
-  const tempMatrix = new THREE.Matrix4();
-  tempMatrix.identity().extractRotation(controller.matrixWorld);
-  
-  raycaster.ray.origin.setFromMatrixPosition(controller.matrixWorld);
-  raycaster.ray.direction.set(0, 0, -1).applyMatrix4(tempMatrix);
+// Toute la logique manettes / sélection / suivi / input VR vit dans CameraController.
+const infoBubble = new InfoBubble(espace.scene, espace.camera);
+// Vue détaillée : affichée quand on appuie sur X après avoir sélectionné une planète.
+const detailedView = new DetailedView(espace.scene, espace.camera, astres, espace.renderer);
+// HUD attaché à la caméra (visible uniquement en VR/à travers la caméra) :
+// affiche l'astre suivi, la vitesse, et l'aide-mémoire des boutons A/B.
+const hud = new HUD(espace.camera);
+// Panneau d'aide VR : affiché à l'entrée en session, fermé à la gâchette.
+const vrTutorial = new VRTutorial(espace.scene);
+// Tunnel d'hyperespace : animation d'entrée VR. Affiché tant que le
+// tutoriel est ouvert, fade out à la validation du tutoriel.
+const hyperespace = new HyperEspace(espace.scene);
+// Message "Bienvenue dans le système solaire" qui apparaît à la sortie
+// d'hyperespace puis se cache tout seul après quelques secondes.
+const messageBienvenue = new MessageBienvenue(espace.scene);
+// Poussière spatiale : nuage de points qui suit le joueur, donne une
+// sensation de vitesse et d'échelle quand on se déplace au stick.
+const poussiere = new PoussiereSpatiale(espace.scene);
+const cameraController = new CameraController(espace, astres, infoBubble, detailedView, hud, vrTutorial, hyperespace, messageBienvenue);
 
-  // Chercher les intersections avec les meshes de tous les astres
-  const meshes = astres.map(a => a.mesh).filter(m => m !== undefined);
-  const intersects = raycaster.intersectObjects(meshes, false);
-
-  if (intersects.length > 0) {
-    const object = intersects[0].object;
-    // Retrouver l'instance d'Astre via userData
-    if (object.userData && object.userData.astre) {
-      trackedAstre = object.userData.astre;
-      infoBubble.show(trackedAstre);
-      
-      // Mettre la couleur de la ligne en rouge lors d'une sélection
-      const line = controller.getObjectByName('line');
-      if (line) line.material.color.set(0xff0000);
-      
-      setTimeout(() => {
-        if (line) line.material.color.set(0x00ff00);
-      }, 300);
-    }
-  } else {
-    // Clic dans le vide = annuler le tracking
-    trackedAstre = null;
-    infoBubble.hide();
-  }
-}
-
-// Gestion de la vitesse de simulation
-let timeScale = 1;
+// UI 2D : slider HTML <-> timeScale du contrôleur, dans les deux sens.
 const speedSlider = document.getElementById('speed-slider');
 const speedValue = document.getElementById('speed-value');
 
 if (speedSlider && speedValue) {
   speedSlider.addEventListener('input', (e) => {
-    timeScale = parseFloat(e.target.value);
-    speedValue.textContent = timeScale.toFixed(2) + 'x';
+    const v = parseFloat(e.target.value);
+    cameraController.setTimeScale(v);
+    speedValue.textContent = v.toFixed(2) + 'x';
   });
 }
 
-function handleVRInput() {
-  const session = espace.renderer.xr.getSession();
-  if (session) {
-    for (const source of session.inputSources) {
-      // Vérifier si la manette possède un joystick (axes)
-      if (source.gamepad && source.gamepad.axes.length >= 4) {
-        // L'axe 3 correspond généralement au Y du joystick principal (Oculus, etc.)
-        const yAxis = source.gamepad.axes[3];
-        // Zone morte (deadzone) pour éviter les modifications accidentelles
-        if (Math.abs(yAxis) > 0.1) {
-          // Pousser en avant donne une valeur négative -> on augmente la vitesse
-          timeScale -= yAxis * 0.02;
-          timeScale = Math.max(0, Math.min(2, timeScale));
-          
-          // Mettre à jour l'UI 2D en temps réel
-          if (speedSlider) speedSlider.value = timeScale;
-          if (speedValue) speedValue.textContent = timeScale.toFixed(2) + 'x';
-        }
-      }
-    }
-  }
+// Le joystick VR appelle ce callback : on synchronise l'UI HTML + le HUD VR.
+cameraController.onTimeScaleChange = (v) => {
+  if (speedSlider) speedSlider.value = v;
+  if (speedValue) speedValue.textContent = v.toFixed(2) + 'x';
+  hud.setSpeed(v);
+};
+
+// Le slider HTML doit aussi mettre à jour le HUD VR.
+if (speedSlider) {
+  speedSlider.addEventListener('input', (e) => {
+    hud.setSpeed(parseFloat(e.target.value));
+  });
 }
 
 // 4. Boucle d'animation : setAnimationLoop est requis pour WebXR/VR.
 //    Il remplace requestAnimationFrame et s'arrête automatiquement quand
 //    la session XR se termine.
+// Position monde de la caméra réutilisée chaque frame pour la poussière
+// (évite d'allouer un Vector3 dans la boucle).
+const _posCameraMonde = new THREE.Vector3();
 espace.renderer.setAnimationLoop(() => {
-  handleVRInput();
-  
-  for (const astre of astres) astre.update(timeScale);
-  
-  // Si on track un astre, déplacer le rig de la caméra
-  if (trackedAstre) {
-    const pos = new THREE.Vector3();
-    trackedAstre.mesh.getWorldPosition(pos);
-    
-    // Décaler un peu le rig pour ne pas être DANS la planète
-    const decalage = Math.max(10, trackedAstre.rayon * 3);
-    pos.z += decalage; // Positionner devant
-    
-    // Lerp pour un déplacement fluide (anti motion-sickness)
-    espace.rig.position.lerp(pos, 0.05);
-  }
-  
+  cameraController.update();
+  for (const astre of astres) astre.update(cameraController.timeScale);
   infoBubble.update();
+  espace.camera.getWorldPosition(_posCameraMonde);
+  poussiere.update(_posCameraMonde);
   espace.render();
 });
