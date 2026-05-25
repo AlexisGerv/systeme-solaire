@@ -1,16 +1,6 @@
 import Espace from './espace.js';
-import Soleil from './class/sun.js';
-import Mercure from './class/mercury.js';
-import Venus from './class/venus.js';
-import Terre from './class/earth.js';
-import Lune from './class/moon.js';
-import Mars from './class/mars.js';
-import Jupiter from './class/jupiter.js';
-import Saturne from './class/saturn.js';
-import Uranus from './class/uranus.js';
-import Neptune from './class/neptune.js';
+import Astre from './class/astre.js';
 import CeintureAsteroides from './class/asteroid_belt.js';
-import CeintureKuiper from './class/kuiper_belt.js';
 import InfoBubble from './class/info_bubble.js';
 import HUD from './class/hud.js';
 import VRTutorial from './class/vr_tutorial.js';
@@ -27,51 +17,6 @@ import './style.css';
 // 1. On crée l'espace : il possède la scène, la caméra et le renderer
 const espace = new Espace();
 
-// 2. Le Soleil au centre
-const soleil = new Soleil(espace.scene);
-soleil.init();
-
-// 3. Les planètes, du plus proche au plus lointain.
-//    Chacune reçoit la scène et s'attache directement au Soleil (= centre).
-const mercure = new Mercure(espace.scene);
-mercure.init();
-
-const venus = new Venus(espace.scene);
-venus.init();
-
-const terre = new Terre(espace.scene);
-terre.init();
-
-// La Lune s'attache à l'anchor de la Terre : même position que la Terre,
-// mais sans hériter de sa rotation propre. Du coup la Lune suit la Terre
-// dans son orbite autour du Soleil, et orbite proprement autour d'elle.
-const lune = new Lune(espace.scene, terre.anchor);
-lune.init();
-
-const mars = new Mars(espace.scene);
-mars.init();
-
-// Ceinture d'astéroïdes entre Mars et Jupiter.
-const ceinture = new CeintureAsteroides(espace.scene);
-ceinture.init();
-
-const jupiter = new Jupiter(espace.scene);
-jupiter.init();
-
-const saturne = new Saturne(espace.scene);
-saturne.init();
-
-const uranus = new Uranus(espace.scene);
-uranus.init();
-
-const neptune = new Neptune(espace.scene);
-neptune.init();
-
-// Ceinture de Kuiper : au-delà de Neptune.
-const kuiper = new CeintureKuiper(espace.scene);
-kuiper.init();
-
-// Lunes de Jupiter et Saturne, pilotées par info_planete.json.
 // Le fichier JSON est servi par Vite depuis /public.
 const infoPlanetes = await fetch('/info_planete.json').then((r) => r.json());
 
@@ -83,6 +28,7 @@ const TAILLE_LUNE = {
   Amalthea: 0.06, Himalia: 0.05,
   Titan: 0.20, Rhea: 0.10, Iapetus: 0.10, Dione: 0.09,
   Tethys: 0.09, Enceladus: 0.06, Mimas: 0.05, Hyperion: 0.05, Phoebe: 0.05,
+  Charon: 0.07, Nix: 0.035, Hydra: 0.035
 };
 const TAILLE_DEFAUT = 0.035;
 
@@ -110,60 +56,109 @@ function ajouterLunes(planeteData, planeteAstre, rmin, rmax) {
 
   return planeteData.moons.map((m) => {
     const t = logMax === logMin ? 0.5 : (Math.log10(m.distance) - logMin) / (logMax - logMin);
-    const lune = new Lune(espace.scene, planeteAstre.anchor, {
-      rayon: TAILLE_LUNE[m.name] ?? TAILLE_DEFAUT,
+    const lune = new Astre({
+      scene: espace.scene,
+      parent: planeteAstre.anchor,
+      texturePath: '/2k_moon.jpg',
+      rayon: m.visual_radius ?? TAILLE_LUNE[m.name] ?? TAILLE_DEFAUT,
       distanceOrbite: rmin + t * (rmax - rmin),
-      vitesseOrbite: vitesseAngulaire(m.orbital_period),
-      vitesseRotation: vitesseAngulaire(m.rotation_period ?? m.orbital_period),
+      vitesseOrbite: m.visual_orbital_speed ?? vitesseAngulaire(m.orbital_period),
+      vitesseRotation: m.visual_rotation_speed ?? vitesseAngulaire(m.rotation_period ?? m.orbital_period),
       ombre: false,
+      nom: m.nom ?? m.name,
+      info: m.info ?? "Pas d'information disponible.",
     });
     lune.init();
     return lune;
   });
 }
 
-// Bornes visuelles : Jupiter (rayon 2.2) à 20, Saturne (rayon 1.9, anneaux jusqu'à 4.18) à 25,
-// Uranus à 33. On garde une marge pour ne pas chevaucher la planète voisine.
-const lunesJupiter = ajouterLunes(infoPlanetes.jupiter, jupiter, 2.6, 4.5);
-const lunesSaturne = ajouterLunes(infoPlanetes.saturn, saturne, 4.5, 6.5);
+// Génération dynamique des planètes et des lunes depuis le JSON
+const planeteAstres = {};
+const astres = [];
 
-// On regroupe tous les astres pour pouvoir les mettre à jour en une seule boucle.
-const astres = [soleil, mercure, venus, terre, lune, mars, ceinture, jupiter, saturne, uranus, neptune, kuiper, ...lunesJupiter, ...lunesSaturne];
+// Ordre spécifique de génération des corps célestes
+const ordrePlanetes = ['sun', 'mercury', 'venus', 'earth', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune', 'pluto'];
+
+for (const key of ordrePlanetes) {
+  const data = infoPlanetes[key];
+  if (!data) continue;
+
+  const rotationPeriod = data.rotation_period ?? 0;
+  const orbitalPeriod = data.orbital_period ?? 0;
+  
+  // La vitesse de rotation dépend du sens de rotation (période négative = rétrograde)
+  const vitesseRotation = rotationPeriod ? (0.01 / rotationPeriod) : 0;
+  const vitesseOrbite = orbitalPeriod ? (0.005 * 365.25 / orbitalPeriod) : 0;
+
+  const astre = new Astre({
+    scene: espace.scene,
+    texturePath: '/' + data.texture,
+    rayon: data.visual_radius,
+    vitesseRotation: vitesseRotation,
+    distanceOrbite: data.visual_distance,
+    vitesseOrbite: vitesseOrbite,
+    inclinaison: data.axial_tilt ?? 0,
+    emissif: data.emissive ?? false,
+    nom: data.nom,
+    info: data.info,
+    lumiere: data.lumiere ?? false,
+    anneau: data.anneau ?? null
+  });
+
+  astre.init();
+  planeteAstres[key] = astre;
+  astres.push(astre);
+
+  // Génération dynamique des lunes
+  if (data.moons && data.moons.length > 0 && data.moon_range) {
+    const lunes = ajouterLunes(data, astre, data.moon_range[0], data.moon_range[1]);
+    astres.push(...lunes);
+  }
+
+  // Ceinture d'astéroïdes entre Mars et Jupiter
+  if (key === 'mars') {
+    const ceinture = new CeintureAsteroides(espace.scene);
+    ceinture.init();
+    astres.push(ceinture);
+  }
+
+  // Ceinture de Kuiper au-delà de Neptune (incluant Pluton)
+  if (key === 'neptune') {
+    const kuiper = new CeintureAsteroides(espace.scene, {
+      nombre: 2000,
+      rayonMin: 55,
+      rayonMax: 80,
+      epaisseur: 2.0,
+      tailleMin: 0.03,
+      tailleMax: 0.2,
+      vitesseOrbite: 0.0004,
+      couleur: 0xc8dde8,
+    });
+    kuiper.init();
+    astres.push(kuiper);
+  }
+}
 
 // === Ombres isolées par système planétaire ===
-// Avec une seule PointLight au Soleil, l'ombre d'une lune se projette le long
-// de la ligne Soleil → lune et peut atteindre n'importe quelle planète plus
-// loin sur cette ligne (ex: la Lune projetait son ombre sur Jupiter ou Saturne).
-// Pour empêcher ça : chaque système planète+lunes est placé sur une COUCHE
-// dédiée, et reçoit sa propre PointLight (co-localisée avec le Soleil) qui ne
-// "voit" que cette couche. La shadow map de cette lumière ne contient donc
-// que la planète et ses lunes — l'ombre ne peut tomber que sur la planète.
-//
-// ⚠ NE PAS utiliser les couches 1 et 2 : Three.js les réserve au rendu
-// stéréo WebXR (cf. WebXRManager.js : `cameraL.layers.mask &= ~0b100` et
-// `cameraR.layers.mask &= ~0b010`). Concrètement, un objet placé seul sur
-// la couche 1 n'est visible que par l'œil gauche, et un objet sur la couche
-// 2 n'est visible que par l'œil droit. On démarre donc à 3.
-function isolerSystemeOmbre(planete, couche) {
-  // 1. Bascule planète + ses lunes (sous le pivot) sur la couche dédiée.
-  //    set() (et non enable()) retire la couche 0, sinon la lumière globale
-  //    du Soleil les éclairerait DEUX fois (une via couche 0, une via couche N).
+function isolerSystemeOmbre(planete, couche, soleilAstre) {
   planete.pivot.traverse((obj) => obj.layers.set(couche));
 
-  // 2. Lumière dédiée au Soleil pour ce système : seule à projeter des ombres
-  //    sur cette couche. Mêmes paramètres que la lumière globale du Soleil
-  //    pour conserver l'éclairage existant.
   const lumiere = new THREE.PointLight(0xffffff, 10, 0, 1);
   lumiere.layers.set(couche);
   lumiere.castShadow = true;
   lumiere.shadow.mapSize.width = 1024;
   lumiere.shadow.mapSize.height = 1024;
-  soleil.pivot.add(lumiere);
+  soleilAstre.pivot.add(lumiere);
 }
 
-isolerSystemeOmbre(terre, 3);
-isolerSystemeOmbre(jupiter, 4);
-isolerSystemeOmbre(saturne, 5);
+// Appliquer les ombres isolées pour les systèmes spécifiés dans le JSON
+for (const [key, astre] of Object.entries(planeteAstres)) {
+  const data = infoPlanetes[key];
+  if (data && data.shadow_layer && planeteAstres['sun']) {
+    isolerSystemeOmbre(astre, data.shadow_layer, planeteAstres['sun']);
+  }
+}
 
 // Toute la logique manettes / sélection / suivi / input VR vit dans CameraController.
 const infoBubble = new InfoBubble(espace.scene, espace.camera);

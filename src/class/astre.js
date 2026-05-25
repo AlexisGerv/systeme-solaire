@@ -33,6 +33,8 @@ export default class Astre {
     ombre = true,              // false = n'utilise pas la shadow map (utile pour les nombreuses petites lunes)
     nom = "Inconnu",
     info = "Pas d'information disponible",
+    lumiere = false,
+    anneau = null,
   }) {
     // On garde les paramètres pour les utiliser dans init() et update()
     // Les tailles (rayon) et distances orbitales sont multipliées par ECHELLE
@@ -51,6 +53,8 @@ export default class Astre {
     this.ombre = ombre;
     this.nom = nom;
     this.info = info;
+    this.lumiere = lumiere;
+    this.anneau = anneau;
   }
 
   init() {
@@ -105,6 +109,44 @@ export default class Astre {
     }
 
     this.tilt.add(this.mesh);
+
+    // 7. Lumière (Optionnelle) : pour les sources lumineuses comme le Soleil
+    if (this.lumiere) {
+      const pLight = new THREE.PointLight(0xffffff, 10, 0, 1);
+      this.pivot.add(pLight);
+    }
+
+    // 8. Anneaux (Optionnels) : ex pour Saturne
+    if (this.anneau) {
+      const rayonInterieur = this.rayon * (this.anneau.rayonInterieurRatio ?? 1.2);
+      const rayonExterieur = this.rayon * (this.anneau.rayonExterieurRatio ?? 2.2);
+      const geometrieAnneaux = new THREE.RingGeometry(rayonInterieur, rayonExterieur, 128);
+
+      const positions = geometrieAnneaux.attributes.position;
+      const uvs = geometrieAnneaux.attributes.uv;
+      for (let i = 0; i < positions.count; i++) {
+        const x = positions.getX(i);
+        const y = positions.getY(i);
+        const r = Math.sqrt(x * x + y * y);
+        const u = (r - rayonInterieur) / (rayonExterieur - rayonInterieur);
+        uvs.setXY(i, u, 1);
+      }
+      uvs.needsUpdate = true;
+
+      const textureAnneaux = new THREE.TextureLoader().load(this.anneau.texture);
+      textureAnneaux.colorSpace = THREE.SRGBColorSpace;
+
+      const materiauAnneaux = new THREE.MeshStandardMaterial({
+        map: textureAnneaux,
+        side: THREE.DoubleSide,
+        transparent: true,
+      });
+
+      const anneauxMesh = new THREE.Mesh(geometrieAnneaux, materiauAnneaux);
+      anneauxMesh.rotation.x = Math.PI / 2;
+      anneauxMesh.receiveShadow = true;
+      this.tilt.add(anneauxMesh);
+    }
   }
 
   update(timeScale = 1) {

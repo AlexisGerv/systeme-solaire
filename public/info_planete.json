@@ -1,59 +1,93 @@
 {
   "sun": {
+    "nom": "Soleil",
+    "info": "L'étoile au centre de notre système solaire, représentant plus de 99% de sa masse totale et fournissant la lumière et la chaleur nécessaires à la vie.",
     "radius": 696340,
     "texture": "2k_sun.jpg",
-    "rotation_period": 25.38
+    "rotation_period": 25.38,
+    "visual_radius": 2,
+    "visual_distance": 0,
+    "emissive": true,
+    "lumiere": true
   },
   "mercury": {
+    "nom": "Mercure",
+    "info": "La planète la plus proche du Soleil. Une petite planète rocheuse et stérile, caractérisée par des températures extrêmes oscillant entre -180°C et 430°C.",
     "radius": 2439.7,
     "distance": 57910,
     "orbital_period": 88,
     "texture": "2k_mercury.jpg",
     "rotation_period": 58.6,
     "axial_tilt": 0.034,
+    "visual_radius": 0.383,
+    "visual_distance": 3.5,
     "moons": []
   },
   "venus": {
+    "nom": "Vénus",
+    "info": "La planète la plus chaude du système solaire. Son atmosphère épaisse de dioxyde de carbone retient la chaleur par un effet de serre extrêmement intense.",
     "radius": 6051.8,
     "distance": 108200,
     "orbital_period": 224.7,
     "texture": "2k_venus_atmosphere.jpg",
     "rotation_period": 243,
     "axial_tilt": 177.4,
+    "visual_radius": 0.95,
+    "visual_distance": 5.5,
     "moons": []
   },
   "earth": {
+    "nom": "Terre",
+    "info": "Notre planète bleue, la seule connue pour abriter la vie. Elle possède de vastes océans d'eau liquide et une atmosphère riche en oxygène et azote.",
     "radius": 6371,
     "distance": 149600,
     "orbital_period": 365.25,
     "texture": "2k_earth_daymap.jpg",
     "rotation_period": 1,
     "axial_tilt": 23.44,
+    "visual_radius": 1.0,
+    "visual_distance": 8.5,
+    "shadow_layer": 3,
+    "moon_range": [1.5, 1.5],
     "moons": [
       {
         "name": "Moon",
+        "nom": "Lune",
+        "info": "Le seul satellite naturel de la Terre. Elle influence les marées océaniques et stabilise l'axe de rotation de notre planète.",
         "distance": 384400,
         "orbital_period": 27.32,
-        "rotation_period": 27.32
+        "rotation_period": 27.32,
+        "visual_radius": 0.27,
+        "visual_orbital_speed": 0.0669,
+        "visual_rotation_speed": 0.0669
       }
     ]
   },
   "mars": {
+    "nom": "Mars",
+    "info": "Surnommée la planète rouge en raison de l'abondance d'oxyde de fer à sa surface. Elle abrite Olympus Mons, le plus grand volcan du système solaire.",
     "radius": 3389.5,
     "distance": 227940,
     "orbital_period": 687,
     "texture": "2k_mars.jpg",
     "rotation_period": 1.03,
     "axial_tilt": 25.19,
+    "visual_radius": 0.53,
+    "visual_distance": 12.0,
+    "moon_range": [0.9, 1.8],
     "moons": [
       {
         "name": "Phobos",
+        "nom": "Phobos",
+        "info": "La plus grande et la plus proche des lunes de Mars. Elle orbite si près qu'elle finira par se désintégrer ou s'écraser sur Mars.",
         "distance": 9376,
         "orbital_period": 0.319,
         "rotation_period": 0.319
       },
       {
         "name": "Deimos",
+        "nom": "Deimos",
+        "info": "La plus petite et la plus éloignée des deux lunes de Mars. C'est un bloc rocheux irrégulier qui est probablement un astéroïde capturé.",
         "distance": 23463,
         "orbital_period": 1.263,
         "rotation_period": 1.263
@@ -61,111 +95,151 @@
     ]
   },
   "jupiter": {
+    "nom": "Jupiter",
+    "info": "La plus grande planète du système solaire. Cette géante gazeuse possède une atmosphère tourmentée marquée par la célèbre Grande Tache Rouge.",
     "radius": 69911,
     "distance": 778547,
     "orbital_period": 4331.6,
-    "texture": "jupiter.jpg",
+    "texture": "2k_jupiter.jpg",
     "rotation_period": 0.41,
     "axial_tilt": 3.13,
+    "visual_radius": 2.2,
+    "visual_distance": 22.0,
+    "shadow_layer": 4,
+    "moon_range": [2.6, 4.5],
     "moons": [
       {
         "name": "Metis",
+        "nom": "Métis",
+        "info": "La lune la plus interne de Jupiter, qui contribue à alimenter en poussière l'anneau principal de la planète.",
         "distance": 128000,
         "orbital_period": 0.295,
         "rotation_period": 0.295
       },
       {
         "name": "Adrastea",
+        "nom": "Adrastée",
+        "info": "La deuxième lune la plus proche de Jupiter, située au sein même de son système d'anneaux.",
         "distance": 129000,
         "orbital_period": 0.298,
         "rotation_period": 0.298
       },
       {
         "name": "Amalthea",
+        "nom": "Amalthée",
+        "info": "Une lune irrégulière et très rouge de Jupiter, qui rayonne plus de chaleur qu'elle n'en reçoit du Soleil.",
         "distance": 181366,
         "orbital_period": 0.498,
         "rotation_period": 0.498
       },
       {
         "name": "Thebe",
+        "nom": "Thébé",
+        "info": "La quatrième lune de Jupiter. De forme irrégulière et sombre, sa surface est parsemée de cratères d'impact.",
         "distance": 221889,
         "orbital_period": 0.675,
         "rotation_period": 0.675
       },
       {
         "name": "Io",
+        "nom": "Io",
+        "info": "Le corps céleste le plus actif volcaniquement du système solaire, à cause des intenses forces de marée générées par Jupiter.",
         "distance": 421700,
         "orbital_period": 1.769,
         "rotation_period": 1.769
       },
       {
         "name": "Europa",
+        "nom": "Europe",
+        "info": "Recouverte d'une croûte de glace d'eau, elle abrite un océan liquide global en profondeur propice au développement de la vie.",
         "distance": 671034,
         "orbital_period": 3.551,
         "rotation_period": 3.551
       },
       {
         "name": "Ganymede",
+        "nom": "Ganymède",
+        "info": "Le plus grand satellite naturel du système solaire, dépassant Mercure en taille. C'est la seule lune dotée d'une magnétosphère.",
         "distance": 1070400,
         "orbital_period": 7.155,
         "rotation_period": 7.155
       },
       {
         "name": "Callisto",
+        "nom": "Callisto",
+        "info": "La troisième plus grande lune du système solaire, caractérisée par une surface extrêmement ancienne et saturée de cratères.",
         "distance": 1882700,
         "orbital_period": 16.689,
         "rotation_period": 16.689
       },
       {
         "name": "Themisto",
+        "nom": "Thémisto",
+        "info": "Une lune irrégulière de taille intermédiaire orbitant entre les lunes galiléennes et le groupe externe d'Himalia.",
         "distance": 7393216,
         "orbital_period": 130.02,
         "rotation_period": null
       },
       {
         "name": "Leda",
+        "nom": "Léda",
+        "info": "Une minuscule lune irrégulière prograde de Jupiter, membre du groupe d'Himalia.",
         "distance": 11165000,
         "orbital_period": 240.92,
         "rotation_period": null
       },
       {
         "name": "Himalia",
+        "nom": "Himalia",
+        "info": "La plus grande lune irrégulière de Jupiter, qui donne son nom à un groupe de satellites aux orbites similaires.",
         "distance": 11461000,
         "orbital_period": 250.56,
         "rotation_period": 0.4
       },
       {
         "name": "Lysithea",
+        "nom": "Lysithée",
+        "info": "Une lune irrégulière prograde faisant partie du groupe d'Himalia, probablement un fragment d'un astéroïde capturé.",
         "distance": 11717000,
         "orbital_period": 259.2,
         "rotation_period": null
       },
       {
         "name": "Elara",
+        "nom": "Élara",
+        "info": "La deuxième plus grande lune irrégulière du groupe d'Himalia, orbitant à environ 11,7 millions de kilomètres de Jupiter.",
         "distance": 11741000,
         "orbital_period": 259.64,
         "rotation_period": 0.5
       },
       {
         "name": "Ananke",
+        "nom": "Ananké",
+        "info": "Une lune irrégulière rétrograde qui donne son nom au groupe d'Ananké, composé d'objets aux orbites proches.",
         "distance": 21276000,
         "orbital_period": -629.77,
         "rotation_period": null
       },
       {
         "name": "Carme",
+        "nom": "Carmé",
+        "info": "La lune principale du groupe de Carmé, un ensemble de lunes irrégulières rétrogrades tournant très loin de Jupiter.",
         "distance": 23404000,
         "orbital_period": -734.17,
         "rotation_period": null
       },
       {
         "name": "Pasiphae",
+        "nom": "Pasiphaé",
+        "info": "Une lune irrégulière rétrograde très éloignée de Jupiter, sujette à d'importantes perturbations gravitationnelles.",
         "distance": 23624000,
         "orbital_period": -743.63,
         "rotation_period": null
       },
       {
         "name": "Sinope",
+        "nom": "Sinopé",
+        "info": "Une lune externe rétrograde à l'orbite fortement inclinée, qui pourrait être un astéroïde capturé de manière indépendante.",
         "distance": 23939000,
         "orbital_period": -758.9,
         "rotation_period": null
@@ -173,194 +247,356 @@
     ]
   },
   "saturn": {
+    "nom": "Saturne",
+    "info": "Une géante gazeuse célèbre pour ses anneaux spectaculaires constitués principalement de particules de glace et de poussière rocheuse.",
     "radius": 58232,
     "distance": 1433449,
     "orbital_period": 10759.2,
     "texture": "2k_saturn.jpg",
     "rotation_period": 0.45,
     "axial_tilt": 26.73,
+    "visual_radius": 1.9,
+    "visual_distance": 34.0,
+    "shadow_layer": 5,
+    "moon_range": [4.5, 6.5],
+    "anneau": {
+      "texture": "/2k_saturn_ring_alpha.png",
+      "rayonInterieurRatio": 1.2,
+      "rayonExterieurRatio": 2.2
+    },
     "moons": [
       {
         "name": "Pan",
+        "nom": "Pan",
+        "info": "Une lune en forme de soucoupe qui orbite dans la division d'Encke et nettoie les poussières de cette zone.",
         "distance": 133584,
         "orbital_period": 0.575,
         "rotation_period": 0.575
       },
       {
         "name": "Daphnis",
+        "nom": "Daphnis",
+        "info": "Orbitant dans la division de Keeler, ses perturbations gravitationnelles créent des vagues visibles sur les bords des anneaux.",
         "distance": 136505,
         "orbital_period": 0.594,
         "rotation_period": 0.594
       },
       {
         "name": "Atlas",
+        "nom": "Atlas",
+        "info": "Une lune bergère très aplatie, située juste à la limite extérieure de l'anneau A de Saturne.",
         "distance": 137670,
         "orbital_period": 0.602,
         "rotation_period": 0.602
       },
       {
         "name": "Prometheus",
+        "nom": "Prométhée",
+        "info": "Une lune bergère de forme allongée qui façonne et sculpte le bord intérieur de l'anneau F de Saturne.",
         "distance": 139380,
         "orbital_period": 0.613,
         "rotation_period": 0.613
       },
       {
         "name": "Pandora",
+        "nom": "Pandore",
+        "info": "Lune bergère extérieure de l'anneau F de Saturne, elle interagit avec Prométhée pour stabiliser cet anneau complexe.",
         "distance": 141720,
         "orbital_period": 0.629,
         "rotation_period": 0.629
       },
       {
         "name": "Epimetheus",
+        "nom": "Épiméthée",
+        "info": "Cette lune partage presque la même orbite que Janus et échange régulièrement sa position orbitale avec elle.",
         "distance": 151422,
         "orbital_period": 0.694,
         "rotation_period": 0.694
       },
       {
         "name": "Janus",
+        "nom": "Janus",
+        "info": "Lune co-orbitale d'Épiméthée, avec laquelle elle effectue une danse gravitationnelle unique tous les quatre ans.",
         "distance": 151472,
         "orbital_period": 0.695,
         "rotation_period": 0.695
       },
       {
         "name": "Mimas",
+        "nom": "Mimas",
+        "info": "Cette lune glacée arbore le gigantesque cratère Herschel, lui conférant une ressemblance frappante avec l'Étoile de la Mort.",
         "distance": 185539,
         "orbital_period": 0.942,
         "rotation_period": 0.942
       },
       {
         "name": "Enceladus",
+        "nom": "Encelade",
+        "info": "Un monde actif doté d'un océan sous sa glace. Ses geysers de vapeur d'eau au pôle sud alimentent l'anneau E de Saturne.",
         "distance": 237948,
         "orbital_period": 1.37,
         "rotation_period": 1.37
       },
       {
         "name": "Tethys",
+        "nom": "Téthys",
+        "info": "Une lune glacée caractérisée par le grand canyon Ithaca Chasma et le cratère géant Odysseus.",
         "distance": 294619,
         "orbital_period": 1.888,
         "rotation_period": 1.888
       },
       {
         "name": "Telesto",
+        "nom": "Télesto",
+        "info": "Une lune troyenne qui orbite au point de Lagrange stable L4 en devançant Téthys sur son orbite.",
         "distance": 294619,
         "orbital_period": 1.888,
         "rotation_period": 1.888
       },
       {
         "name": "Calypso",
+        "nom": "Calypso",
+        "info": "Une lune troyenne de Téthys, qui la suit fidèlement au point de Lagrange stable L5.",
         "distance": 294619,
         "orbital_period": 1.888,
         "rotation_period": 1.888
       },
       {
         "name": "Dione",
+        "nom": "Dione",
+        "info": "Une lune composée d'eau glacée présentant des falaises blanches lumineuses issues d'une ancienne activité tectonique.",
         "distance": 377396,
         "orbital_period": 2.737,
         "rotation_period": 2.737
       },
       {
         "name": "Helene",
+        "nom": "Hélène",
+        "info": "Une lune troyenne qui précède Dione sur son orbite en restant au point de Lagrange stable L4.",
         "distance": 377396,
         "orbital_period": 2.737,
         "rotation_period": 2.737
       },
       {
         "name": "Rhea",
+        "nom": "Rhéa",
+        "info": "La deuxième plus grande lune de Saturne. Sa surface glacée est fortement cratérisée et géologiquement inactive.",
         "distance": 527068,
         "orbital_period": 4.518,
         "rotation_period": 4.518
       },
       {
         "name": "Titan",
+        "nom": "Titan",
+        "info": "La plus grande lune de Saturne, enveloppée d'une atmosphère dense. Elle possède des lacs de méthane et d'éthane liquides.",
         "distance": 1221870,
         "orbital_period": 15.945,
         "rotation_period": 15.945
       },
       {
         "name": "Hyperion",
+        "nom": "Hypérion",
+        "info": "Une lune de forme irrégulière et spongieuse à la rotation chaotique, ressemblant à une éponge de mer géante.",
         "distance": 1481009,
         "orbital_period": 21.276,
         "rotation_period": null
       },
       {
         "name": "Iapetus",
+        "nom": "Japet",
+        "info": "Célèbre pour son aspect bicolore (une face très sombre et une face brillante) et sa haute chaîne de montagnes équatoriale.",
         "distance": 3560820,
         "orbital_period": 79.32,
         "rotation_period": 79.32
       },
       {
         "name": "Phoebe",
+        "nom": "Phœbé",
+        "info": "Une lune lointaine tournant sur une orbite rétrograde. C'est probablement un planétésimal glacé issu de la ceinture de Kuiper.",
         "distance": 12944300,
         "orbital_period": -550.31,
         "rotation_period": 0.4
       }
     ]
   },
-  "pluto": {
-    "radius": 1188.3,
-    "distance": 5906380,
-    "orbital_period": 90560,
-    "texture": "pluto.jpg",
-    "rotation_period": 6.39,
-    "axial_tilt": 119.6,
-    "moons": [
-      {
-        "name": "Charon",
-        "distance": 19591,
-        "orbital_period": 6.387,
-        "rotation_period": 6.387
-      },
-      {
-        "name": "Nix",
-        "distance": 48694,
-        "orbital_period": 24.854,
-        "rotation_period": null
-      },
-      {
-        "name": "Hydra",
-        "distance": 64738,
-        "orbital_period": 38.2,
-        "rotation_period": null
-      }
-    ]
-  },
   "uranus": {
+    "nom": "Uranus",
+    "info": "Une géante glacée caractérisée par une couleur bleu-vert due au méthane et une inclinaison extrême unique de 98 degrés.",
     "radius": 25362,
     "distance": 2870658,
     "orbital_period": 30687.15,
-    "texture": "uranus.jpg",
+    "texture": "2k_uranus.jpg",
     "rotation_period": -0.72,
     "axial_tilt": 97.77,
+    "visual_radius": 1.4,
+    "visual_distance": 44.0,
+    "moon_range": [2.0, 3.5],
     "moons": [
       {
         "name": "Miranda",
+        "nom": "Miranda",
+        "info": "Possède une surface extrêmement tourmentée, faite d'un patchwork unique de canyons, falaises et plaines.",
         "distance": 129900,
         "orbital_period": 1.41,
         "rotation_period": 1.41
       },
       {
         "name": "Ariel",
+        "nom": "Ariel",
+        "info": "La plus brillante des grandes lunes d'Uranus, sillonnée de vastes réseaux de vallées et de plaines glacées.",
         "distance": 190900,
         "orbital_period": 2.52,
         "rotation_period": 2.52
       },
       {
         "name": "Umbriel",
+        "nom": "Umbriel",
+        "info": "La plus sombre et la plus ancienne des lunes majeures d'Uranus, saturée de cratères d'impact.",
         "distance": 266000,
         "orbital_period": 4.14,
         "rotation_period": 4.14
       },
       {
         "name": "Titania",
+        "nom": "Titania",
+        "info": "La plus grande lune d'Uranus, marquée par d'immenses failles et un relief montrant une activité tectonique passée.",
         "distance": 435800,
         "orbital_period": 8.71,
         "rotation_period": 8.71
       },
       {
         "name": "Oberon",
+        "nom": "Obéron",
+        "info": "La lune la plus externe d'Uranus, fortement cratérisée avec des dépôts sombres sur le fond de ses cratères.",
         "distance": 583500,
         "orbital_period": 13.46,
         "rotation_period": 13.46
+      }
+    ]
+  },
+  "neptune": {
+    "nom": "Neptune",
+    "info": "Une géante de glace d'un bleu profond, balayée par les vents les plus violents du système solaire atteignant 2000 km/h.",
+    "radius": 24622,
+    "distance": 4498396,
+    "orbital_period": 60190.03,
+    "texture": "2k_neptune.jpg",
+    "rotation_period": 0.67,
+    "axial_tilt": 28.32,
+    "visual_radius": 1.35,
+    "visual_distance": 50.0,
+    "moon_range": [2.0, 3.5],
+    "moons": [
+      {
+        "name": "Naiad",
+        "nom": "Naïade",
+        "info": "La lune la plus interne de Neptune, qui orbite si vite qu'elle fait le tour de la planète en seulement 7 heures.",
+        "distance": 48227,
+        "orbital_period": 0.294,
+        "rotation_period": 0.294
+      },
+      {
+        "name": "Thalassa",
+        "nom": "Thalassa",
+        "info": "Une petite lune sur une orbite en spirale descendante lente qui finira par se désintégrer.",
+        "distance": 50074,
+        "orbital_period": 0.311,
+        "rotation_period": 0.311
+      },
+      {
+        "name": "Despina",
+        "nom": "Despina",
+        "info": "Lune interne qui agit comme bergère pour l'anneau intérieur Le Verrier de Neptune.",
+        "distance": 52526,
+        "orbital_period": 0.335,
+        "rotation_period": 0.335
+      },
+      {
+        "name": "Galatea",
+        "nom": "Galatée",
+        "info": "Lune bergère qui maintient par résonance gravitationnelle la cohésion de l'anneau externe d'Adams.",
+        "distance": 61953,
+        "orbital_period": 0.429,
+        "rotation_period": 0.429
+      },
+      {
+        "name": "Larissa",
+        "nom": "Larissa",
+        "info": "Une lune irrégulière sombre de forme ovoïde, découverte à l'origine lors d'une occultation d'étoile.",
+        "distance": 73548,
+        "orbital_period": 0.555,
+        "rotation_period": 0.555
+      },
+      {
+        "name": "Hippocamp",
+        "nom": "Hippocampe",
+        "info": "La plus petite lune interne de Neptune, découverte en 2013 par le télescope spatial Hubble.",
+        "distance": 105283,
+        "orbital_period": 0.936,
+        "rotation_period": null
+      },
+      {
+        "name": "Proteus",
+        "nom": "Protée",
+        "info": "La deuxième lune de Neptune en taille, si sombre et irrégulière qu'elle absorbe la quasi-totalité de la lumière.",
+        "distance": 117646,
+        "orbital_period": 1.122,
+        "rotation_period": 1.122
+      },
+      {
+        "name": "Triton",
+        "nom": "Triton",
+        "info": "La plus grande lune de Neptune, caractérisée par une orbite rétrograde et des geysers actifs d'azote gazeux.",
+        "distance": 354759,
+        "orbital_period": -5.877,
+        "rotation_period": 5.877
+      },
+      {
+        "name": "Nereid",
+        "nom": "Néréide",
+        "info": "Lune externe remarquable pour son orbite extrêmement allongée et excentrique.",
+        "distance": 5513818,
+        "orbital_period": 360.13,
+        "rotation_period": 0.48
+      }
+    ]
+  },
+  "pluto": {
+    "nom": "Pluton",
+    "info": "Une planète naine glacée de la ceinture de Kuiper, célèbre pour sa grande plaine en forme de cœur appelée Tombaugh Regio.",
+    "radius": 1188.3,
+    "distance": 5906380,
+    "orbital_period": 90560,
+    "texture": "pluto.jpg",
+    "rotation_period": 6.39,
+    "axial_tilt": 119.6,
+    "visual_radius": 0.186,
+    "visual_distance": 56.0,
+    "moon_range": [0.4, 1.0],
+    "moons": [
+      {
+        "name": "Charon",
+        "nom": "Charon",
+        "info": "La lune géante de Pluton, formant un système double verrouillé gravitationnellement avec elle.",
+        "distance": 19591,
+        "orbital_period": 6.387,
+        "rotation_period": 6.387
+      },
+      {
+        "name": "Nix",
+        "nom": "Nix",
+        "info": "Une petite lune irrégulière qui tourne de manière chaotique sous l'effet gravitationnel de Pluton-Charon.",
+        "distance": 48694,
+        "orbital_period": 24.854,
+        "rotation_period": null
+      },
+      {
+        "name": "Hydra",
+        "nom": "Hydra",
+        "info": "La lune la plus externe de Pluton, de forme irrégulière et recouverte d'une glace d'eau très pure.",
+        "distance": 64738,
+        "orbital_period": 38.2,
+        "rotation_period": null
       }
     ]
   }
