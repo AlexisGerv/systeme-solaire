@@ -100,15 +100,19 @@ export default class CameraController {
         this.trackedAstre = object.userData.astre;
         this._lastTrackedPos = null; // recalculé à la prochaine frame
 
-        // Initialise l'orbite : distance = portée du laser + rayon de la planète
-        this._distanceOrbite = PORTEE_RAYCASTER + this.trackedAstre.rayon;
-
-        // Angle d'orbite basé sur la direction actuelle rig↔planète
         const posAstre = new THREE.Vector3();
         this.trackedAstre.mesh.getWorldPosition(posAstre);
         const posRig = this.espace.rig.position;
-        const dir = posAstre.clone().sub(posRig);
-        this._angleOrbite = Math.atan2(dir.x, dir.z);
+
+        // Distance XZ réelle au moment du tir, au minimum 2× le rayon
+        const dxz = Math.sqrt(
+          (posRig.x - posAstre.x) ** 2 + (posRig.z - posAstre.z) ** 2
+        );
+        this._distanceOrbite = Math.max(dxz, this.trackedAstre.rayon * 2);
+
+        // Angle depuis la planète vers le rig (convention cos→X, sin→Z)
+        const dirVersRig = posRig.clone().sub(posAstre);
+        this._angleOrbite = Math.atan2(dirVersRig.z, dirVersRig.x);
 
         this.infoBubble.show(this.trackedAstre);
         this.detailedView.hide();
