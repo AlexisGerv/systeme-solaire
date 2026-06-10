@@ -1,5 +1,4 @@
 import * as THREE from 'three';
-import { ECHELLE } from './astre.js';
 
 export default class InfoBubble {
   constructor(scene, camera) {
@@ -23,8 +22,7 @@ export default class InfoBubble {
     const material = new THREE.SpriteMaterial({ map: this.texture, depthTest: false });
     
     this.sprite = new THREE.Sprite(material);
-    // Taille mise à l'échelle pour rester lisible à côté des astres agrandis.
-    this.sprite.scale.set(10 * ECHELLE, 5 * ECHELLE, 1);
+    this.sprite.scale.set(10, 5, 1);
     this.sprite.visible = false;
     
     // On met un renderOrder grand pour qu'il s'affiche par-dessus
@@ -89,7 +87,7 @@ export default class InfoBubble {
 
     // Sans caméra, fallback : offset purement en X monde.
     if (!this.camera) {
-      const offsetX = Math.max(5 * ECHELLE, this.targetAstre.rayon * 1.5 + 2 * ECHELLE);
+      const offsetX = Math.max(5, this.targetAstre.rayon * 1.5 + 2);
       this.sprite.position.copy(this._posAstre);
       this.sprite.position.x += offsetX;
       return;
@@ -127,7 +125,7 @@ export default class InfoBubble {
     //   constant (~14° à droite du centre) → la bulle reste dans le champ
     //   de vision quand on est collé à la planète en VR.
     const offset = Math.max(
-      this.targetAstre.rayon * 1.5 + 2 * ECHELLE,
+      this.targetAstre.rayon * 1.5 + 2,
       distCamAstre * 0.25,
     );
 

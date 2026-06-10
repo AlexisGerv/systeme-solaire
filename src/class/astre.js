@@ -1,13 +1,5 @@
 import * as THREE from 'three';
 
-// Facteur d'échelle global appliqué aux tailles ET aux distances orbitales.
-// Augmenter cette valeur agrandit tout le système solaire en bloc, sans
-// toucher aux vitesses (les périodes orbitales restent identiques).
-// Ramené à 1 : on garde le système à sa taille initiale et on délègue le
-// "sentiment de grandeur" à la poussière spatiale (parallaxe pendant les
-// déplacements).
-export const ECHELLE = 1;
-
 // Classe parente commune à tous les astres (Soleil, Terre, Lune...).
 // Elle factorise : création de la sphère, chargement de la texture,
 // rotation propre, et système d'orbite via un "pivot".
@@ -37,16 +29,12 @@ export default class Astre {
     anneau = null,
   }) {
     // On garde les paramètres pour les utiliser dans init() et update()
-    // Les tailles (rayon) et distances orbitales sont multipliées par ECHELLE
-    // au moment de l'enregistrement : tout le code en aval (raycaster, suivi,
-    // anneaux de Saturne via this.rayon * 1.2, etc.) profite directement de
-    // la valeur déjà mise à l'échelle, sans avoir à connaître la constante.
     this.scene = scene;
     this.parent = parent;
     this.texturePath = texturePath;
-    this.rayon = rayon * ECHELLE;
+    this.rayon = rayon;
     this.vitesseRotation = vitesseRotation;
-    this.distanceOrbite = distanceOrbite * ECHELLE;
+    this.distanceOrbite = distanceOrbite;
     this.vitesseOrbite = vitesseOrbite;
     this.emissif = emissif;
     this.inclinaison = inclinaison;

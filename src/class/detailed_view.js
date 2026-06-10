@@ -1,5 +1,4 @@
 import * as THREE from 'three';
-import { ECHELLE } from './astre.js';
 
 export default class DetailedView {
   constructor(scene, camera, astres, renderer) {
@@ -26,7 +25,7 @@ export default class DetailedView {
     });
 
     this.spriteTexte = new THREE.Sprite(materialTexte);
-    this.spriteTexte.scale.set(15 * ECHELLE, 11.25 * ECHELLE, 1);
+    this.spriteTexte.scale.set(15, 11.25, 1);
     this.spriteTexte.renderOrder = 999;
     this.spriteTexte.visible = false;
     this.scene.add(this.spriteTexte);
@@ -47,7 +46,7 @@ export default class DetailedView {
     });
 
     this.spriteModele = new THREE.Sprite(materialModele);
-    this.spriteModele.scale.set(9 * ECHELLE, 9 * ECHELLE, 1);
+    this.spriteModele.scale.set(9, 9, 1);
     this.spriteModele.renderOrder = 999;
     this.spriteModele.visible = false;
     this.scene.add(this.spriteModele);
@@ -137,7 +136,7 @@ export default class DetailedView {
     this.contextTexte.fillStyle = 'rgba(255, 255, 255, 0.9)';
 
     const lines = [
-      `Rayon: ${(astre.rayon / ECHELLE).toFixed(1)} km`,
+      `Rayon: ${astre.rayon.toFixed(1)} km`,
       `Vitesse orbitale: ${(astre.vitesseOrbite * 365).toFixed(2)}°/an`,
       `Période de rotation: ${(astre.vitesseRotation * 24).toFixed(2)}°/jour`,
       '',
@@ -213,7 +212,7 @@ export default class DetailedView {
     rightPerp.normalize();
 
     const offset = Math.max(
-      this.currentAstre.rayon * 1.5 + 2 * ECHELLE,
+      this.currentAstre.rayon * 1.5 + 2,
       distCamAstre * 0.25,
     );
 

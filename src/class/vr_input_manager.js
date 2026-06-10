@@ -1,7 +1,6 @@
 import * as THREE from 'three';
-import { ECHELLE } from './astre.js';
 
-const PORTEE_RAYCASTER = 30 * ECHELLE;
+const PORTEE_RAYCASTER = 30;
 const DEADZONE_STICK = 0.15;
 
 export default class VRInputManager {

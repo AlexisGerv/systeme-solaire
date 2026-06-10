@@ -1,12 +1,11 @@
 import * as THREE from 'three';
-import { ECHELLE } from './class/astre.js';
 
 // Gère les déplacements de la caméra (rig), le suivi orbital des astres
 // et le raycast de sélection (à la gâchette).
 // Délégué pour les aspects matériels :
 //  - VRInputManager : pour les contrôleurs WebXR, lasers, joysticks et boutons.
 //  - RocketAudio : pour le retour sonore de propulsion (Web Audio).
-const PORTEE_RAYCASTER = 30 * ECHELLE;
+const PORTEE_RAYCASTER = 30;
 
 export default class CameraController {
   constructor(espace, astres, infoBubble, detailedView, hud, tutorial, hyperespace, messageBienvenue, vrInput, rocketAudio) {
@@ -35,6 +34,11 @@ export default class CameraController {
     this._lastTrackedPos = null;
     this._angleOrbite = 0;
     this._distanceOrbite = 0;
+    // Yaw de la tête (caméra locale au rig) capturé à la sélection : permet
+    // d'orienter le rig pour que la planète reste devant le regard de
+    // l'utilisateur, sans verrouiller sa tête ensuite.
+    this._headYawOffset = 0;
+    this._rotationManuelle = false;
 
     this.timeScale = 1;
     this.onTimeScaleChange = null;
@@ -54,7 +58,7 @@ export default class CameraController {
     const xr = this.espace.renderer.xr;
     xr.addEventListener('sessionstart', () => {
       // Téléporte le rig juste à l'extérieur de la ceinture de Kuiper
-      this.espace.rig.position.set(0, 30 * ECHELLE, 120 * ECHELLE);
+      this.espace.rig.position.set(0, 30, 120);
       this.espace.rig.rotation.set(0, 0, 0);
       
       this.trackedAstre = null;
@@ -100,15 +104,33 @@ export default class CameraController {
         this.trackedAstre = object.userData.astre;
         this._lastTrackedPos = null; // recalculé à la prochaine frame
 
-        // Initialise l'orbite : distance = portée du laser + rayon de la planète
-        this._distanceOrbite = PORTEE_RAYCASTER + this.trackedAstre.rayon;
+        // Initialise l'orbite : distance d'observation proportionnelle au
+        // rayon de l'astre (et non à la portée du laser, sinon on reste
+        // toujours à ~30 unités, énorme pour les petites planètes).
+        const rayon = this.trackedAstre.rayon || 1;
+        this._distanceOrbite = Math.max(2, rayon * 4 + 1.5);
 
-        // Angle d'orbite basé sur la direction actuelle rig↔planète
+        // Angle d'orbite basé sur la position actuelle du rig autour de la
+        // planète (même paramétrisation que _mettreAJourOrbiteAutomatique :
+        // rig = astre + (cos, sin) * distance), pour démarrer l'orbite sur
+        // place sans grand balayage autour de l'astre.
         const posAstre = new THREE.Vector3();
         this.trackedAstre.mesh.getWorldPosition(posAstre);
         const posRig = this.espace.rig.position;
-        const dir = posAstre.clone().sub(posRig);
-        this._angleOrbite = Math.atan2(dir.x, dir.z);
+        this._angleOrbite = Math.atan2(
+          posRig.z - posAstre.z,
+          posRig.x - posAstre.x,
+        );
+
+        // Capture le yaw actuel de la tête : si l'utilisateur a la tête
+        // tournée par rapport au rig au moment de la sélection, on garde ce
+        // décalage pour que la planète reste devant son regard.
+        const forwardTete = new THREE.Vector3(0, 0, -1)
+          .applyQuaternion(this.espace.camera.quaternion);
+        this._headYawOffset =
+          forwardTete.x * forwardTete.x + forwardTete.z * forwardTete.z > 1e-6
+            ? Math.atan2(-forwardTete.x, -forwardTete.z)
+            : 0;
 
         this.infoBubble.show(this.trackedAstre);
         this.detailedView.hide();
@@ -151,11 +173,12 @@ export default class CameraController {
   // Vitesse de translation adaptée à la distance au Soleil
   _calculerVitesseTranslation() {
     const distAuCentre = this.espace.rig.position.length();
-    return Math.max(8 * ECHELLE, distAuCentre * 0.4);
+    return Math.max(8, distAuCentre * 0.4);
   }
 
   // Pilotage VR : interprétation de l'état des entrées
   _handleVRInput(dt) {
+    this._rotationManuelle = false;
     if (!this.vrInput) return false;
 
     const vrState = this.vrInput.getState();
@@ -166,6 +189,8 @@ export default class CameraController {
       if (this.rocketAudio) this.rocketAudio.setVolumeCible(0);
       return false;
     }
+
+    this._rotationManuelle = vrState.rotation.x !== 0;
 
     const { forward: camForward, right: camRight } = this._calculerVecteursCaméra();
     const vitesseTrans = this._calculerVitesseTranslation();
@@ -253,6 +278,33 @@ export default class CameraController {
     );
 
     this.espace.rig.position.lerp(cibleOrbite, 0.05);
+
+    // Le rig pivote en même temps qu'il orbite, sinon la planète (et sa
+    // bulle d'info) défile autour de l'utilisateur qui doit se retourner.
+    // Le stick droit garde la priorité : pas de réorientation pendant une
+    // rotation manuelle (elle reprend en douceur au relâchement).
+    if (!this._rotationManuelle) {
+      this._orienterRigVersAstre(posAstre);
+    }
+  }
+
+  // Fait tourner le yaw du rig pour que la planète reste face à l'utilisateur
+  // (en tenant compte du yaw de tête capturé à la sélection).
+  _orienterRigVersAstre(posAstre) {
+    const rig = this.espace.rig;
+    const dirX = posAstre.x - rig.position.x;
+    const dirZ = posAstre.z - rig.position.z;
+    if (dirX * dirX + dirZ * dirZ < 1e-6) return;
+
+    // Forward du rig = -Z tourné de rotation.y → yaw visé = atan2(-x, -z)
+    const capVise = Math.atan2(-dirX, -dirZ) - this._headYawOffset;
+    // Interpolation sur le plus court arc (gestion du passage ±180°)
+    const delta =
+      THREE.MathUtils.euclideanModulo(
+        capVise - rig.rotation.y + Math.PI,
+        2 * Math.PI,
+      ) - Math.PI;
+    rig.rotation.y += delta * 0.05;
   }
 
   setTimeScale(v) {

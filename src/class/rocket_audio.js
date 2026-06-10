@@ -1,5 +1,5 @@
-  export default class RocketAudio {
-  constructor(url = '/jci21-rocket-launch-sfx-253937.mp3') {
+export default class RocketAudio {
+  constructor(url = "/jci21-rocket-launch-sfx-253937.mp3") {
     this.url = url;
     this.context = null;
     this.gainNode = null;
@@ -38,7 +38,7 @@
       this.gainNode = gain;
       this.sourceNode = source;
     } catch (e) {
-      console.warn('Audio fusée indisponible :', e);
+      console.warn("Audio fusée indisponible :", e);
     }
   }
 
@@ -49,7 +49,7 @@
   update() {
     if (!this.gainNode || !this.context) return;
 
-    if (this.context.state === 'suspended') {
+    if (this.context.state === "suspended") {
       this.context.resume().catch(() => {});
     }
 
