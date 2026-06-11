@@ -3,8 +3,8 @@ import * as THREE from 'three';
 // Message d'accueil "Bienvenue dans le système solaire" affiché à la
 // sortie d'hyperespace (après validation du tutoriel à la gâchette).
 //
-// Implémenté comme un Sprite + CanvasTexture, même pattern que VRTutorial
-// et InfoBubble, donc lisible en VR depuis n'importe quel angle.
+// Implémenté comme un Sprite + CanvasTexture, même pattern que VRTutorial,
+// donc lisible en VR depuis n'importe quel angle.
 //
 // Cycle de vie :
 //   show() -> apparaît, fade in rapide (~0.4s)

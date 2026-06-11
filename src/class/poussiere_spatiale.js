@@ -11,7 +11,7 @@ import * as THREE from 'three';
 // particules existantes, et celles qui passent derrière nous réapparaissent
 // devant. Coût négligeable (1500 points, 1 draw call, pas d'ombres).
 export default class PoussiereSpatiale {
-  constructor(scene, { nombre = 1500, rayon = 30 } = {}) {
+  constructor(scene, { nombre = 2000, rayon = 50 } = {}) {
     this.nombre = nombre;
     this.rayon = rayon;
     this.rayonCarre = rayon * rayon;

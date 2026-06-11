@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import BoucleAudio from './boucle_audio.js';
 
 // Animation d'entrée VR : effet "vitesse lumière" autour du casque pendant
 // que le tutoriel est ouvert. À la validation (gâchette), startSortie()
@@ -65,17 +66,11 @@ export default class HyperEspace {
     this._fadeProgress = 0;
     this._modeleCharge = false;
 
-    // Audio (Web Audio API) : un seul AudioBuffer décodé pour les deux
-    // phases. Source recréée à chaque transition (les BufferSourceNode
-    // ne peuvent être start() qu'une fois). _modeAudio sert à savoir si
-    // hide() doit couper le son ou laisser jouer le bruit de sortie.
-    this._audioContext = null;
-    this._audioBuffer = null;
-    this._audioGain = null;
-    this._audioSource = null;
+    // Audio : un seul fichier pour les deux phases (boucle d'ambiance et
+    // bruit de sortie). _modeAudio sert à savoir si hide() doit couper le
+    // son ou laisser jouer le bruit de sortie jusqu'au bout.
+    this._audio = new BoucleAudio('/hyperspace.mp3', { volume: VOLUME_AUDIO });
     this._modeAudio = null;       // 'boucle' | 'sortie' | null
-    this._audioDemandePending = false; // show() appelé avant fin du chargement
-    this._chargerAudio('/hyperspace.mp3');
 
     const loader = new GLTFLoader();
     loader.load(
@@ -223,7 +218,8 @@ export default class HyperEspace {
     this._fadeProgress = 0;
     for (const mat of this._materiauxStreaks) mat.opacity = 1;
     this._modeAudio = 'boucle';
-    this._demarrerAudioBoucle();
+    // Démarre directement à DEBUT_BOUCLE pour éviter les ~19s de silence/intro.
+    this._audio.jouerBoucle(DEBUT_BOUCLE, FIN_BOUCLE);
   }
 
   startSortie() {
@@ -231,7 +227,7 @@ export default class HyperEspace {
     this._fadeOut = true;
     this._fadeProgress = 0;
     this._modeAudio = 'sortie';
-    this._demarrerAudioSortie();
+    this._audio.jouerUneFois(TEMPS_SORTIE);
   }
 
   hide() {
@@ -243,7 +239,7 @@ export default class HyperEspace {
     // Sinon (boucle interrompue : utilisateur quitte la VR sans valider),
     // on coupe pour ne pas laisser une boucle tourner en arrière-plan.
     if (this._modeAudio === 'boucle') {
-      this._stopAudio();
+      this._audio.stop();
       this._modeAudio = null;
     }
   }
@@ -251,9 +247,8 @@ export default class HyperEspace {
   // Stop forcé de l'audio, peu importe le mode. Appelé par CameraController
   // sur sessionend pour garantir qu'aucun son ne reste actif après la VR.
   arreterAudio() {
-    this._stopAudio();
+    this._audio.stop();
     this._modeAudio = null;
-    this._audioDemandePending = false;
   }
 
   get visible() {
@@ -288,81 +283,4 @@ export default class HyperEspace {
     }
   }
 
-  // Charge le MP3, décode en AudioBuffer. Si show() a déjà été appelé
-  // avant la fin du chargement, on enchaîne directement la lecture.
-  async _chargerAudio(url) {
-    try {
-      const ctx = new (window.AudioContext || window.webkitAudioContext)();
-      const reponse = await fetch(url);
-      const buffer = await reponse.arrayBuffer();
-      this._audioBuffer = await ctx.decodeAudioData(buffer);
-
-      const gain = ctx.createGain();
-      gain.gain.value = VOLUME_AUDIO;
-      gain.connect(ctx.destination);
-
-      this._audioContext = ctx;
-      this._audioGain = gain;
-
-      // show() a pu être appelé avant la fin du chargement : on rattrape.
-      if (this._audioDemandePending && this._modeAudio === 'boucle') {
-        this._audioDemandePending = false;
-        this._demarrerAudioBoucle();
-      }
-    } catch (e) {
-      console.warn('Hyperespace : audio indisponible', e);
-    }
-  }
-
-  // Coupe la source en cours (boucle ou one-shot) et la déconnecte.
-  // Robuste : un BufferSourceNode déjà arrêté lance une exception sur stop().
-  _stopAudio() {
-    if (this._audioSource) {
-      try { this._audioSource.stop(); } catch (e) { /* déjà arrêté */ }
-      try { this._audioSource.disconnect(); } catch (e) { /* déjà déconnecté */ }
-      this._audioSource = null;
-    }
-  }
-
-  // Lance la boucle d'ambiance hyperespace (DEBUT_BOUCLE → FIN_BOUCLE en loop).
-  _demarrerAudioBoucle() {
-    if (!this._audioContext || !this._audioBuffer) {
-      // Pas encore prêt : on rejouera dès que _chargerAudio aura fini.
-      this._audioDemandePending = true;
-      return;
-    }
-    this._stopAudio();
-    if (this._audioContext.state === 'suspended') {
-      this._audioContext.resume().catch(() => {});
-    }
-    const dur = this._audioBuffer.duration;
-    const debut = Math.min(DEBUT_BOUCLE, Math.max(0, dur - 0.1));
-    const fin = Math.min(FIN_BOUCLE, dur);
-    const src = this._audioContext.createBufferSource();
-    src.buffer = this._audioBuffer;
-    src.loop = true;
-    src.loopStart = debut;
-    src.loopEnd = fin;
-    src.connect(this._audioGain);
-    // Démarre directement à DEBUT_BOUCLE pour éviter les ~19s de silence/intro.
-    src.start(0, debut);
-    this._audioSource = src;
-  }
-
-  // Joue le bruit de sortie d'hyperespace (one-shot à partir de TEMPS_SORTIE).
-  _demarrerAudioSortie() {
-    if (!this._audioContext || !this._audioBuffer) return;
-    this._stopAudio();
-    if (this._audioContext.state === 'suspended') {
-      this._audioContext.resume().catch(() => {});
-    }
-    const src = this._audioContext.createBufferSource();
-    src.buffer = this._audioBuffer;
-    src.loop = false;
-    src.connect(this._audioGain);
-    // Cap au cas où le fichier serait plus court que prévu.
-    const offset = Math.min(TEMPS_SORTIE, Math.max(0, this._audioBuffer.duration - 0.1));
-    src.start(0, offset);
-    this._audioSource = src;
-  }
 }

@@ -1,7 +1,6 @@
 import Espace from './espace.js';
 import Astre from './class/astre.js';
 import CeintureAsteroides from './class/asteroid_belt.js';
-import InfoBubble from './class/info_bubble.js';
 import HUD from './class/hud.js';
 import VRTutorial from './class/vr_tutorial.js';
 import HyperEspace from './class/hyperespace.js';
@@ -161,8 +160,8 @@ for (const [key, astre] of Object.entries(planeteAstres)) {
 }
 
 // Toute la logique manettes / sélection / suivi / input VR vit dans CameraController.
-const infoBubble = new InfoBubble(espace.scene, espace.camera);
-// Vue détaillée : affichée quand on appuie sur X après avoir sélectionné une planète.
+// Vue détaillée : seul affichage de texte sur un astre, à la demande (bouton X
+// après sélection) pour ne pas gâcher la vue pendant l'orbite.
 const detailedView = new DetailedView(espace.scene, espace.camera, astres, espace.renderer);
 // HUD attaché à la caméra (visible uniquement en VR/à travers la caméra) :
 // affiche l'astre suivi, la vitesse, et l'aide-mémoire des boutons A/B.
@@ -179,48 +178,43 @@ const messageBienvenue = new MessageBienvenue(espace.scene);
 // sensation de vitesse et d'échelle quand on se déplace au stick.
 const poussiere = new PoussiereSpatiale(espace.scene);
 
-// Nouvelles instances factorisées pour la gestion des périphériques et du son
+// Gestion des périphériques (manettes VR) et du son de propulsion
 const vrInput = new VRInputManager(espace);
 const rocketAudio = new RocketAudio();
 
-const cameraController = new CameraController(
-  espace, 
-  astres, 
-  infoBubble, 
-  detailedView, 
-  hud, 
-  vrTutorial, 
-  hyperespace, 
+const cameraController = new CameraController({
+  espace,
+  astres,
+  detailedView,
+  hud,
+  tutorial: vrTutorial,
+  hyperespace,
   messageBienvenue,
   vrInput,
-  rocketAudio
-);
+  rocketAudio,
+});
 
 // UI 2D : slider HTML <-> timeScale du contrôleur, dans les deux sens.
 const speedSlider = document.getElementById('speed-slider');
 const speedValue = document.getElementById('speed-value');
 
-if (speedSlider && speedValue) {
-  speedSlider.addEventListener('input', (e) => {
-    const v = parseFloat(e.target.value);
-    cameraController.setTimeScale(v);
-    speedValue.textContent = v.toFixed(2) + 'x';
-  });
-}
-
-// Le joystick VR appelle ce callback : on synchronise l'UI HTML + le HUD VR.
-cameraController.onTimeScaleChange = (v) => {
+// Reflète une valeur de timeScale dans le slider HTML, son libellé et le HUD VR.
+function afficherTimeScale(v) {
   if (speedSlider) speedSlider.value = v;
   if (speedValue) speedValue.textContent = v.toFixed(2) + 'x';
   hud.setSpeed(v);
-};
+}
 
-// Le slider HTML doit aussi mettre à jour le HUD VR.
 if (speedSlider) {
   speedSlider.addEventListener('input', (e) => {
-    hud.setSpeed(parseFloat(e.target.value));
+    const v = parseFloat(e.target.value);
+    cameraController.setTimeScale(v);
+    afficherTimeScale(v);
   });
 }
+
+// Le joystick VR (boutons A/B) appelle ce callback : même synchro.
+cameraController.onTimeScaleChange = afficherTimeScale;
 
 // 4. Boucle d'animation : setAnimationLoop est requis pour WebXR/VR.
 //    Il remplace requestAnimationFrame et s'arrête automatiquement quand
@@ -231,7 +225,6 @@ const _posCameraMonde = new THREE.Vector3();
 espace.renderer.setAnimationLoop(() => {
   cameraController.update();
   for (const astre of astres) astre.update(cameraController.timeScale);
-  infoBubble.update();
   espace.camera.getWorldPosition(_posCameraMonde);
   poussiere.update(_posCameraMonde);
   espace.render();

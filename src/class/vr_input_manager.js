@@ -1,16 +1,15 @@
 import * as THREE from 'three';
 
-const PORTEE_RAYCASTER = 30;
-const DEADZONE_STICK = 0.15;
+// Exportée : CameraController doit utiliser la même portée pour son
+// raycaster que la longueur visuelle du laser, sinon le rayon "ment".
+export const PORTEE_RAYCASTER = 30;
 
 export default class VRInputManager {
   constructor(espace) {
     this.espace = espace;
-    this.deadzone = DEADZONE_STICK;
-    
-    // Callbacks d'événements
+
+    // Callback déclenché à la gâchette (assigné par CameraController)
     this.onSelect = null;
-    this.onToggleDetail = null;
 
     this._xPrecedent = false;
     this.controllers = [];
@@ -25,10 +24,11 @@ export default class VRInputManager {
       new THREE.Vector3(0, 0, 0),
       new THREE.Vector3(0, 0, -PORTEE_RAYCASTER),
     ]);
-    const rayMaterial = new THREE.LineBasicMaterial({ color: 0x00ff00 });
-
     for (const controller of [c1, c2]) {
       if (!controller) continue;
+      // Matériau propre à chaque manette : flashLaser ne doit colorer que
+      // le laser de la manette qui a sélectionné, pas les deux.
+      const rayMaterial = new THREE.LineBasicMaterial({ color: 0x00ff00 });
       const line = new THREE.Line(rayGeometry, rayMaterial);
       line.name = 'line';
       controller.add(line);
@@ -74,10 +74,8 @@ export default class VRInputManager {
       const hand = source.handedness;
 
       // Axes de thumbstick
-      const xRaw = gp.axes.length >= 4 ? gp.axes[2] : 0;
-      const yRaw = gp.axes.length >= 4 ? gp.axes[3] : 0;
-      const xAxis = Math.abs(xRaw) > this.deadzone ? xRaw : 0;
-      const yAxis = Math.abs(yRaw) > this.deadzone ? yRaw : 0;
+      const xAxis = gp.axes.length >= 4 ? gp.axes[2] : 0;
+      const yAxis = gp.axes.length >= 4 ? gp.axes[3] : 0;
 
       if (hand === 'left') {
         state.translation.x = xAxis;
@@ -92,10 +90,7 @@ export default class VRInputManager {
 
         // Bouton X avec détection de front montant (appui unique)
         const boutonX = gp.buttons[2];
-        if (boutonX && boutonX.pressed && !this._xPrecedent) {
-          state.boutons.X = true;
-          if (this.onToggleDetail) this.onToggleDetail();
-        }
+        state.boutons.X = Boolean(boutonX?.pressed && !this._xPrecedent);
         this._xPrecedent = boutonX?.pressed || false;
       }
     }

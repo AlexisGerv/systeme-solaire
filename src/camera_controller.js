@@ -1,30 +1,37 @@
 import * as THREE from 'three';
+import { PORTEE_RAYCASTER } from './class/vr_input_manager.js';
 
 // Gère les déplacements de la caméra (rig), le suivi orbital des astres
 // et le raycast de sélection (à la gâchette).
 // Délégué pour les aspects matériels :
 //  - VRInputManager : pour les contrôleurs WebXR, lasers, joysticks et boutons.
 //  - RocketAudio : pour le retour sonore de propulsion (Web Audio).
-const PORTEE_RAYCASTER = 30;
-
 export default class CameraController {
-  constructor(espace, astres, infoBubble, detailedView, hud, tutorial, hyperespace, messageBienvenue, vrInput, rocketAudio) {
+  constructor({
+    espace,
+    astres,
+    detailedView,         // vue détaillée (bouton X après sélection)
+    hud,
+    tutorial,             // panneau d'aide au début de la session VR
+    hyperespace,          // animation d'entrée VR (tunnel d'hyperespace)
+    messageBienvenue,     // message de bienvenue à la sortie d'hyperespace
+    vrInput,              // VRInputManager
+    rocketAudio,          // RocketAudio
+  }) {
     this.espace = espace;
     this.astres = astres;
-    this.infoBubble = infoBubble;
     this.detailedView = detailedView;
     this.hud = hud;
-    
-    // Panneau d'aide au début de la session VR
     this.tutorial = tutorial;
-    // Animation d'entrée VR (tunnel d'hyperespace)
     this.hyperespace = hyperespace;
-    // Message de bienvenue
     this.messageBienvenue = messageBienvenue;
-
-    // Nouvelles classes injectées pour la factorisation
     this.vrInput = vrInput;
     this.rocketAudio = rocketAudio;
+
+    // Tous les overlays partagent le contrat update(dt, camera, rig) :
+    // update() les itère au lieu d'un bloc if par overlay.
+    this._overlays = [tutorial, hyperespace, messageBienvenue, detailedView]
+      .filter(Boolean);
 
     this.raycaster = new THREE.Raycaster();
     this.raycaster.far = PORTEE_RAYCASTER;
@@ -132,7 +139,8 @@ export default class CameraController {
             ? Math.atan2(-forwardTete.x, -forwardTete.z)
             : 0;
 
-        this.infoBubble.show(this.trackedAstre);
+        // Pas de texte à la sélection : la vue reste dégagée, le panneau
+        // d'info ne s'affiche qu'à la demande (bouton X).
         this.detailedView.hide();
         if (this.hud) this.hud.setOrbit(this.trackedAstre.nom);
 
@@ -147,7 +155,6 @@ export default class CameraController {
       this._lastTrackedPos = null;
       this._angleOrbite = 0;
       this._distanceOrbite = 0;
-      this.infoBubble.hide();
       this.detailedView.hide();
       if (this.hud) this.hud.setOrbit(null);
     }
@@ -279,8 +286,8 @@ export default class CameraController {
 
     this.espace.rig.position.lerp(cibleOrbite, 0.05);
 
-    // Le rig pivote en même temps qu'il orbite, sinon la planète (et sa
-    // bulle d'info) défile autour de l'utilisateur qui doit se retourner.
+    // Le rig pivote en même temps qu'il orbite, sinon la planète défile
+    // autour de l'utilisateur qui doit se retourner.
     // Le stick droit garde la priorité : pas de réorientation pendant une
     // rotation manuelle (elle reprend en douceur au relâchement).
     if (!this._rotationManuelle) {
@@ -321,15 +328,8 @@ export default class CameraController {
     }
 
     // Mise à jour des overlays
-    if (this.tutorial) this.tutorial.update(this.espace.camera);
-    if (this.hyperespace) {
-      this.hyperespace.update(dt, this.espace.camera, this.espace.rig);
-    }
-    if (this.messageBienvenue) {
-      this.messageBienvenue.update(dt, this.espace.camera);
-    }
-    if (this.detailedView) {
-      this.detailedView.update();
+    for (const overlay of this._overlays) {
+      overlay.update(dt, this.espace.camera, this.espace.rig);
     }
 
     // Suivi et orbite

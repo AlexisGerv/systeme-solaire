@@ -4,7 +4,7 @@ import * as THREE from 'three';
 // (sticks, boutons A/B, gâchette). L'utilisateur appuie sur n'importe
 // quelle gâchette pour le faire disparaître et entrer dans le système.
 //
-// Implémenté comme un Sprite + CanvasTexture (même pattern qu'InfoBubble),
+// Implémenté comme un Sprite + CanvasTexture,
 // donc lisible en VR depuis n'importe quel angle.
 //
 // Positionnement : repositionné chaque frame à une distance fixe devant
@@ -32,7 +32,6 @@ export default class VRTutorial {
     });
 
     this.sprite = new THREE.Sprite(material);
-    // Ratio 4:3 cohérent avec le canvas (1024x768).
     this.sprite.scale.set(4, 3, 1);
     this.sprite.visible = false;
     this.sprite.renderOrder = 1000;
@@ -120,7 +119,8 @@ export default class VRTutorial {
 
   // Replace le panneau à 5 unités devant la caméra, à hauteur des yeux.
   // Comme c'est un Sprite, il s'orientera automatiquement face à la caméra.
-  update(camera) {
+  // Signature update(dt, camera) commune aux overlays (dt inutilisé ici).
+  update(dt, camera) {
     if (!this.sprite.visible) return;
 
     const posCam = new THREE.Vector3();

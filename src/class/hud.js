@@ -6,7 +6,7 @@ import * as THREE from 'three';
 //   - La vitesse temporelle courante (timeScale)
 //   - L'aide-mémoire des boutons (A / B → vitesse)
 //
-// Même pattern que InfoBubble : Canvas 2D -> CanvasTexture -> Sprite.
+// Pattern Canvas 2D -> CanvasTexture -> Sprite.
 // Les Sprites font toujours face à la caméra, donc lisible quel que soit
 // l'angle de tête. depthTest=false pour rester par-dessus la scène 3D.
 export default class HUD {
