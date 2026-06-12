@@ -151,7 +151,7 @@ export default class DetailedView {
           acc[acc.length - 1] = testLine;
         }
         return acc;
-      }, [])
+      }, ['']) // graine [''] : sur [] vide, acc[acc.length - 1] écrirait à l'index -1 et perdrait la 1re ligne
     ];
 
     let y = 150;
@@ -229,9 +229,14 @@ export default class DetailedView {
         meshActuel.rotation.y += 0.01;
       }
       const oldRT = this.renderer.getRenderTarget();
+      // En session WebXR, render() remplace la caméra fournie par celle du
+      // casque : on coupe xr.enabled le temps du rendu hors-écran.
+      const oldXrEnabled = this.renderer.xr.enabled;
+      this.renderer.xr.enabled = false;
       this.renderer.setRenderTarget(this.renderTarget);
       this.renderer.render(this.sceneModele, this.cameraModele);
       this.renderer.setRenderTarget(oldRT);
+      this.renderer.xr.enabled = oldXrEnabled;
     }
   }
 }

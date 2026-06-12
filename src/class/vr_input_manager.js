@@ -80,6 +80,12 @@ export default class VRInputManager {
       if (hand === 'left') {
         state.translation.x = xAxis;
         state.translation.y = yAxis;
+
+        // Bouton X : sur la manette GAUCHE, index 4 du mapping xr-standard
+        // (la droite porte A/B aux mêmes index). Front montant (appui unique).
+        const boutonX = gp.buttons[4];
+        state.boutons.X = Boolean(boutonX?.pressed && !this._xPrecedent);
+        this._xPrecedent = boutonX?.pressed || false;
       } else if (hand === 'right') {
         state.rotation.x = xAxis;
         state.vertical = yAxis;
@@ -87,11 +93,6 @@ export default class VRInputManager {
         // Boutons A / B progressifs (timeScale)
         state.boutons.A = gp.buttons[4]?.pressed || false;
         state.boutons.B = gp.buttons[5]?.pressed || false;
-
-        // Bouton X avec détection de front montant (appui unique)
-        const boutonX = gp.buttons[2];
-        state.boutons.X = Boolean(boutonX?.pressed && !this._xPrecedent);
-        this._xPrecedent = boutonX?.pressed || false;
       }
     }
 
