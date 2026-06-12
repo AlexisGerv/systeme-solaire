@@ -259,9 +259,11 @@ export default class HyperEspace {
     if (!this.group.visible) return;
 
     // Centre le tunnel sur le casque (monde) et l'aligne sur le yaw du rig.
+    // Le rig ne tourne que sur Y : copier ce seul angle suffit (si un jour
+    // le rig gagne du pitch/roll, repasser à group.quaternion.copy(rig.quaternion)).
     camera.getWorldPosition(this._tmpPos);
     this.group.position.copy(this._tmpPos);
-    this.group.quaternion.copy(rig.quaternion);
+    this.group.rotation.y = rig.rotation.y;
 
     if (this._modeleCharge) {
       for (let i = 0; i < NB_STREAKS; i++) {

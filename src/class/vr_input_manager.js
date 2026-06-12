@@ -73,7 +73,7 @@ export default class VRInputManager {
       const gp = source.gamepad;
       const hand = source.handedness;
 
-      // Axes de thumbstick
+      //joystick
       const xAxis = gp.axes.length >= 4 ? gp.axes[2] : 0;
       const yAxis = gp.axes.length >= 4 ? gp.axes[3] : 0;
 
