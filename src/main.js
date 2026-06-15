@@ -10,6 +10,7 @@ import DetailedView from './class/detailed_view.js';
 import CameraController from './camera_controller.js';
 import RocketAudio from './class/rocket_audio.js';
 import VRInputManager from './class/vr_input_manager.js';
+import ManettePC from '../manette-pc/manette_pc.js';
 import * as THREE from 'three';
 import './style.css';
 
@@ -66,6 +67,8 @@ function ajouterLunes(planeteData, planeteAstre, rmin, rmax) {
       ombre: false,
       nom: m.nom ?? m.name,
       info: m.info ?? "Pas d'information disponible.",
+      rayonReel: m.radius ?? 0,
+      vitesseOrbitaleReelle: m.vitesse_orbitale_moyenne_km_s ?? 0,
     });
     lune.init();
     return lune;
@@ -102,7 +105,9 @@ for (const key of ordrePlanetes) {
     nom: data.nom,
     info: data.info,
     lumiere: data.lumiere ?? false,
-    anneau: data.anneau ?? null
+    anneau: data.anneau ?? null,
+    rayonReel: data.radius ?? 0,
+    vitesseOrbitaleReelle: data.vitesse_orbitale_moyenne_km_s ?? 0,
   });
 
   astre.init();
@@ -162,7 +167,7 @@ for (const [key, astre] of Object.entries(planeteAstres)) {
 // Toute la logique manettes / sélection / suivi / input VR vit dans CameraController.
 // Vue détaillée : seul affichage de texte sur un astre, à la demande (bouton X
 // après sélection) pour ne pas gâcher la vue pendant l'orbite.
-const detailedView = new DetailedView(espace.scene, espace.camera, astres, espace.renderer);
+const detailedView = new DetailedView(espace.scene, espace.camera);
 // HUD attaché à la caméra (visible uniquement en VR/à travers la caméra) :
 // affiche l'astre suivi, la vitesse, et l'aide-mémoire des boutons A/B.
 const hud = new HUD(espace.camera);
@@ -178,8 +183,9 @@ const messageBienvenue = new MessageBienvenue(espace.scene);
 // sensation de vitesse et d'échelle quand on se déplace au stick.
 const poussiere = new PoussiereSpatiale(espace.scene);
 
-// Gestion des périphériques (manettes VR) et du son de propulsion
+// Gestion des périphériques (manettes VR, manette PC) et du son de propulsion
 const vrInput = new VRInputManager(espace);
+const manettePC = new ManettePC();
 const rocketAudio = new RocketAudio();
 
 const cameraController = new CameraController({
@@ -191,6 +197,7 @@ const cameraController = new CameraController({
   hyperespace,
   messageBienvenue,
   vrInput,
+  manetteInput: manettePC,
   rocketAudio,
 });
 

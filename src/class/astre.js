@@ -27,6 +27,8 @@ export default class Astre {
     info = "Pas d'information disponible",
     lumiere = false,
     anneau = null,
+    rayonReel = 0,             // rayon réel en km (affiché dans la vue détaillée)
+    vitesseOrbitaleReelle = 0, // vitesse orbitale moyenne réelle en km/s (idem)
   }) {
     // On garde les paramètres pour les utiliser dans init() et update()
     this.scene = scene;
@@ -43,6 +45,8 @@ export default class Astre {
     this.info = info;
     this.lumiere = lumiere;
     this.anneau = anneau;
+    this.rayonReel = rayonReel;
+    this.vitesseOrbitaleReelle = vitesseOrbitaleReelle;
   }
 
   init() {

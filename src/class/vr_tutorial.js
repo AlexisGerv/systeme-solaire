@@ -78,6 +78,7 @@ export default class VRTutorial {
       ['Stick droit (⬆⬇)', 'Monter / descendre'],
       ['Bouton A', 'Accélérer le temps'],
       ['Bouton B', 'Ralentir le temps'],
+      ['Bouton X', "Afficher / masquer les infos de l'astre"],
       ['Gâchette', 'Sélectionner un astre au laser'],
     ];
 

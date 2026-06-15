@@ -16,10 +16,13 @@ Pas de framework UI, pas de TypeScript.
 ## Architecture
 
 ```
+manette-pc/
+└── manette_pc.js            ManettePC : lecture d'une manette de jeu (Xbox One...) via la Gamepad API, hors VR
+
 src/
 ├── main.js                 point d'entrée : génère les astres depuis le JSON, câble tout, boucle d'animation
 ├── espace.js               scène + caméra (dans un rig) + renderer + OrbitControls + VRButton
-├── camera_controller.js    déplacements du rig, suivi orbital, sélection laser, timeScale
+├── camera_controller.js    déplacements du rig, suivi orbital, sélection laser/réticule, timeScale
 ├── style.css
 └── class/
     ├── astre.js            classe unique pour TOUS les astres (pivot/anchor/tilt/mesh, lumière et anneaux en option)
@@ -54,6 +57,9 @@ Il n'y a plus de classe par planète : [main.js](src/main.js) itère sur `ordreP
 `visual_radius`, `visual_distance`, `axial_tilt`, `emissive`, `lumiere`, `anneau`
 (Saturne), `shadow_layer`, `moon_range`, `moons[]`. Les vitesses sont calculées
 depuis les périodes réelles (`rotation_period`, `orbital_period`, en jours).
+Champs réels affichés dans la vue détaillée (bouton X) : `radius` (km) et
+`vitesse_orbitale_moyenne_km_s`, présents pour le Soleil, les planètes et
+toutes les lunes.
 
 ### Hiérarchie d'un astre — [src/class/astre.js](src/class/astre.js)
 
@@ -95,9 +101,16 @@ Tailles : `visual_radius` du JSON, sinon table `TAILLE_LUNE` de main.js, sinon `
 
 - La caméra vit dans un **rig** (`espace.rig`, THREE.Group) : en VR la pose du casque écrase la position caméra, donc on déplace le rig. **Ne jamais mettre `rig.scale ≠ 1`** (rendu flou en WebXR).
 - [vr_input_manager.js](src/class/vr_input_manager.js) attache les 2 manettes au rig, leur ajoute un laser (matériau **par manette**, `flashLaser` rougit celui qui sélectionne), et expose `getState()` : `{ translation, rotation, vertical, boutons: {A, B, X} }` avec front montant pour X (pas de deadzone : valeurs brutes des sticks). Exporte `PORTEE_RAYCASTER` (= longueur du laser = portée du raycast, importé par CameraController).
-- [camera_controller.js](src/camera_controller.js) consomme cet état : stick gauche = translation (vitesse ∝ distance au Soleil), stick droit = yaw + altitude, A/B = timeScale, X = vue détaillée, gâchette = sélection au laser. Constructeur = **objet d'options** `{ espace, astres, detailedView, hud, tutorial, hyperespace, messageBienvenue, vrInput, rocketAudio }`.
+- [camera_controller.js](src/camera_controller.js) consomme cet état via `_handleVRInput` → `_appliquerPilotage(state, dt)` : stick gauche = translation (vitesse ∝ distance au Soleil), stick droit = yaw + altitude, A/B = timeScale, X = vue détaillée, gâchette = sélection au laser. Constructeur = **objet d'options** `{ espace, astres, detailedView, hud, tutorial, hyperespace, messageBienvenue, vrInput, manetteInput, rocketAudio }`.
 - Sélection d'un astre → suivi orbital : le rig suit le déplacement de la planète + orbite automatique lente autour d'elle (reprise du contrôle au stick à tout moment). **Aucun texte ne s'affiche à la sélection** (vue dégagée) : le bouton X bascule la vue détaillée à la demande.
 - Cycle de session VR (`sessionstart`/`sessionend`) : téléportation du rig en bord de Kuiper, tutoriel + hyperespace affichés ; la première gâchette ferme le tutoriel et déclenche la sortie d'hyperespace + message de bienvenue.
+
+### PC : pilotage à la manette de jeu — [manette-pc/manette_pc.js](manette-pc/manette_pc.js)
+
+- `ManettePC` lit la Gamepad API (`navigator.getGamepads()`, mapping "standard" — Xbox One et compatibles) et expose `getState()` avec la **même forme** que `VRInputManager.getState()` (`{ translation, rotation, vertical, boutons: {A, B, X} }`), plus un champ `select` (front montant). Zone morte `ZONE_MORTE = 0.12` (les manettes filaires/Bluetooth dérivent au repos, contrairement aux manettes WebXR).
+- Mapping : stick gauche = translation, stick droit = yaw (X) + altitude (Y), **RT/LT = A/B** (timeScale), **bouton X** = vue détaillée, **bouton A** = sélection au réticule (direction de la caméra, front montant).
+- [camera_controller.js](src/camera_controller.js) : `CameraController.update()` appelle `_handleVRInput(dt)` puis, **hors session WebXR**, `_handleGamepadInput(dt)`. Les deux délèguent à `_appliquerPilotage(state, dt)` (logique de déplacement/timeScale/vue détaillée partagée). `_handleGamepadInput` appelle en plus `_onSelect({ target: espace.camera, portee: Infinity })` sur `state.select` — le raycast part alors de la caméra (réticule au centre de l'écran) au lieu du laser d'une manette VR ; `_onSelect` lit `event.portee` (illimitée au réticule PC, vs `PORTEE_RAYCASTER` = longueur du laser en VR) et `target.matrixWorld`.
+- Cohabite avec `OrbitControls` (souris) : le rig se déplace/tourne sous la caméra, OrbitControls continue d'orienter la caméra dans le repère local du rig (même principe qu'en VR où la pose du casque fait ce rôle).
 
 ### Overlays — contrat commun
 
@@ -127,7 +140,7 @@ Toute lecture audio passe par `BoucleAudio` (un seul `AudioContext` partagé au 
 - **Pas de TypeScript**, ESM (`"type": "module"`).
 - Nouvelles données d'astre → dans `info_planete.json`, pas de nouvelle classe.
 - Les ceintures **n'héritent pas** d'Astre (collection ≠ corps unique) ; Kuiper = `CeintureAsteroides` avec options (nombre, rayons, couleur).
-- Classes à responsabilité unique injectées dans `CameraController` ; ne pas lui rajouter de logique matérielle (manettes → VRInputManager, son → BoucleAudio/RocketAudio).
+- Classes à responsabilité unique injectées dans `CameraController` ; ne pas lui rajouter de logique matérielle (manettes VR → VRInputManager, manette PC → ManettePC, son → BoucleAudio/RocketAudio).
 
 ## Workflow / commits
 
