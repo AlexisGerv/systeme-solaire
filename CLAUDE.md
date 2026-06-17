@@ -34,7 +34,7 @@ src/
     ├── vr_tutorial.js      panneau d'aide affiché au début de session VR (Sprite + CanvasTexture)
     ├── message_bienvenue.js message d'accueil avec fade in/out automatique
     ├── hud.js              HUD attaché à la caméra : astre suivi, vitesse, aide A/B
-    ├── detailed_view.js    vue détaillée d'un astre (bouton X) — seul affichage de texte sur un astre
+    ├── detailed_view.js    vue détaillée d'un astre (bouton X) — seul affichage de texte sur un astre ; lit aussi le contenu à voix haute via speechSynthesis (Web Speech API, fr-FR) à show(), coupe à hide(). Audible sur PC seulement (le Meta Quest Browser ne fournit aucune voix → muet dans le casque)
     └── poussiere_spatiale.js nuage de points qui suit le joueur (sensation de vitesse)
 
 public/
@@ -122,6 +122,10 @@ Toute lecture audio passe par `BoucleAudio` (un seul `AudioContext` partagé au 
 `jouerBoucle(debut, fin)` (mémorisée si appelée avant la fin du chargement), `jouerUneFois(offset)`, `stop()`, `setVolume(v)`, `reprendre()` (autoplay policy), callback `onPret`.
 - `RocketAudio` : boucle 20%-70% du sample à volume 0, `update()` lisse le volume vers la cible poussée par CameraController (∝ intensité des sticks).
 - `HyperEspace` : boucle d'ambiance 0:19-1:30 pendant le tutoriel, one-shot à 1:36 à la sortie. `arreterAudio()` = coupure forcée sur `sessionend`.
+
+### Synthèse vocale (vue détaillée)
+
+`DetailedView.show()` lit le contenu à voix haute via `window.speechSynthesis` (Web Speech API, `fr-FR`), coupé à `hide()`. **Audible sur PC uniquement** : `speechSynthesis` sort sur le périphérique système et le Meta Quest Browser ne fournit aucune voix → muet dans le casque. (Une voix VR via TTS cloud + AudioContext a été tentée puis abandonnée.)
 
 ### Ombres
 

@@ -52,6 +52,7 @@
     "visual_radius": 1.0,
     "visual_distance": 8.5,
     "shadow_layer": 3,
+    "recoit_ombre": true,
     "moon_range": [1.5, 1.5],
     "moons": [
       {
@@ -65,7 +66,8 @@
         "rotation_period": 27.32,
         "visual_radius": 0.27,
         "visual_orbital_speed": 0.0669,
-        "visual_rotation_speed": 0.0669
+        "visual_rotation_speed": 0.0669,
+        "ombre": true
       }
     ]
   },

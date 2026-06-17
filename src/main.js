@@ -64,7 +64,7 @@ function ajouterLunes(planeteData, planeteAstre, rmin, rmax) {
       distanceOrbite: rmin + t * (rmax - rmin),
       vitesseOrbite: m.visual_orbital_speed ?? vitesseAngulaire(m.orbital_period),
       vitesseRotation: m.visual_rotation_speed ?? vitesseAngulaire(m.rotation_period ?? m.orbital_period),
-      ombre: false,
+      lancerOmbre: m.ombre ?? false,
       nom: m.nom ?? m.name,
       info: m.info ?? "Pas d'information disponible.",
       rayonReel: m.radius ?? 0,
@@ -108,6 +108,7 @@ for (const key of ordrePlanetes) {
     anneau: data.anneau ?? null,
     rayonReel: data.radius ?? 0,
     vitesseOrbitaleReelle: data.vitesse_orbitale_moyenne_km_s ?? 0,
+    recevoirOmbre: data.recoit_ombre ?? false,
   });
 
   astre.init();
@@ -151,8 +152,9 @@ function isolerSystemeOmbre(planete, couche, soleilAstre) {
   const lumiere = new THREE.PointLight(0xffffff, 10, 0, 1);
   lumiere.layers.set(couche);
   lumiere.castShadow = true;
-  lumiere.shadow.mapSize.width = 1024;
-  lumiere.shadow.mapSize.height = 1024;
+  lumiere.shadow.mapSize.width = 2048;
+  lumiere.shadow.mapSize.height = 2048;
+  lumiere.shadow.camera.layers.set(couche);
   soleilAstre.pivot.add(lumiere);
 }
 

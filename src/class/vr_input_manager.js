@@ -40,8 +40,85 @@ export default class VRInputManager {
         if (this.onSelect) this.onSelect(e);
       });
 
+      // Étiquettes des boutons collées sur la manette : X à gauche, A/B à
+      // droite. La handedness n'est connue qu'au branchement de la manette
+      // (évènement 'connected'), pas à l'init — on attache les pastilles ici.
+      controller.addEventListener('connected', (e) => {
+        this._ajouterLabels(controller, e.data?.handedness);
+      });
+      controller.addEventListener('disconnected', () => {
+        this._retirerLabels(controller);
+      });
+
       this.controllers.push(controller);
     }
+  }
+
+  // Pose les pastilles de boutons sur une manette selon sa main.
+  // Repères VR-débutants : ils voient « X », « A », « B » au-dessus des
+  // vraies touches sans avoir à les chercher.
+  _ajouterLabels(controller, hand) {
+    this._retirerLabels(controller); // évite les doublons si re-connexion
+
+    const labels = [];
+    if (hand === 'left') {
+      // Bouton X (bleu) : seul bouton utilisé sur la manette gauche.
+      labels.push(this._creerLabelBouton('X', 0x4fa8ff, { x: 0, y: 0.02, z: 0.035 }));
+    } else if (hand === 'right') {
+      // A (vert) plus proche de la main, B (rouge) un cran au-dessus,
+      // comme sur une manette Touch.
+      labels.push(this._creerLabelBouton('A', 0x5fd97a, { x: 0.005, y: 0.02, z: 0.04 }));
+      labels.push(this._creerLabelBouton('B', 0xff7a7a, { x: 0.005, y: 0.028, z: 0.022 }));
+    }
+
+    for (const l of labels) controller.add(l);
+    controller._labelsBoutons = labels;
+  }
+
+  _retirerLabels(controller) {
+    if (!controller._labelsBoutons) return;
+    for (const l of controller._labelsBoutons) {
+      controller.remove(l);
+      l.material.map?.dispose();
+      l.material.dispose();
+    }
+    controller._labelsBoutons = null;
+  }
+
+  // Pastille ronde (lettre blanche sur disque coloré, cerclée de blanc),
+  // rendue en Sprite billboard pour rester lisible sous tous les angles.
+  _creerLabelBouton(lettre, couleurHex, offset) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 128;
+    canvas.height = 128;
+    const ctx = canvas.getContext('2d');
+
+    ctx.beginPath();
+    ctx.arc(64, 64, 56, 0, Math.PI * 2);
+    ctx.fillStyle = '#' + couleurHex.toString(16).padStart(6, '0');
+    ctx.fill();
+    ctx.lineWidth = 8;
+    ctx.strokeStyle = '#ffffff';
+    ctx.stroke();
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 80px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(lettre, 64, 70);
+
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.colorSpace = THREE.SRGBColorSpace;
+
+    // depthTest false : la pastille reste visible même quand le modèle de
+    // la manette passe devant. renderOrder élevé pour le même motif.
+    const material = new THREE.SpriteMaterial({ map: texture, depthTest: false });
+    const sprite = new THREE.Sprite(material);
+    sprite.scale.set(0.022, 0.022, 1); // ~2 cm, taille d'un vrai bouton
+    sprite.position.set(offset.x, offset.y, offset.z);
+    sprite.renderOrder = 999;
+    sprite.name = 'labelBouton';
+    return sprite;
   }
 
   // Permet de flasher le laser en rouge à la sélection

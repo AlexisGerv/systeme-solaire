@@ -37,12 +37,46 @@ export default class DetailedView {
     this._drawDetailedText(astre);
 
     this.spriteTexte.visible = true;
+
+    // Lecture vocale du contenu (Web Speech API). Audible sur PC ; muet dans le
+    // casque (le Meta Quest Browser ne fournit aucune voix speechSynthesis).
+    this._lireTexte(this._texteParole(astre));
   }
 
   hide() {
     this.visible = false;
     this.spriteTexte.visible = false;
     this.currentAstre = null;
+
+    // Couper la lecture en cours en quittant la vue
+    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+  }
+
+  // Construit le texte lu à voix haute (sans mise en forme visuelle)
+  _texteParole(astre) {
+    return [
+      astre.nom || 'Astre',
+      `Rayon : ${astre.rayonReel.toLocaleString('fr-FR')} kilomètres.`,
+      `Vitesse orbitale : ${astre.vitesseOrbitaleReelle.toFixed(2)} kilomètres par seconde.`,
+      astre.info || ''
+    ].join(' ');
+  }
+
+  // Synthèse vocale française ; ignore silencieusement si non supportée
+  _lireTexte(texte) {
+    if (!('speechSynthesis' in window)) {
+      console.error("La synthèse vocale n'est pas supportée par ce navigateur.");
+      return;
+    }
+
+    // Stoppe une lecture en cours pour éviter la superposition
+    window.speechSynthesis.cancel();
+
+    const message = new SpeechSynthesisUtterance(texte);
+    message.lang = 'fr-FR';
+    message.pitch = 1;
+    message.rate = 1;
+    window.speechSynthesis.speak(message);
   }
 
   _drawDetailedText(astre) {
