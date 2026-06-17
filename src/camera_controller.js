@@ -5,7 +5,6 @@ import { PORTEE_RAYCASTER } from './class/vr_input_manager.js';
 // et le raycast de sélection (à la gâchette / au réticule).
 // Délégué pour les aspects matériels :
 //  - VRInputManager : pour les contrôleurs WebXR, lasers, joysticks et boutons.
-//  - ManettePC : pour une manette de jeu (Xbox One...) en mode PC, hors VR.
 //  - RocketAudio : pour le retour sonore de propulsion (Web Audio).
 export default class CameraController {
   constructor({
@@ -17,7 +16,6 @@ export default class CameraController {
     hyperespace,          // animation d'entrée VR (tunnel d'hyperespace)
     messageBienvenue,     // message de bienvenue à la sortie d'hyperespace
     vrInput,              // VRInputManager
-    manetteInput,         // ManettePC (manette de jeu en mode PC)
     rocketAudio,          // RocketAudio
   }) {
     this.espace = espace;
@@ -28,7 +26,6 @@ export default class CameraController {
     this.hyperespace = hyperespace;
     this.messageBienvenue = messageBienvenue;
     this.vrInput = vrInput;
-    this.manetteInput = manetteInput;
     this.rocketAudio = rocketAudio;
 
     // Tous les overlays partagent le contrat update(dt, camera, rig) :
@@ -102,10 +99,8 @@ export default class CameraController {
     const tempMatrix = new THREE.Matrix4();
     tempMatrix.identity().extractRotation(controller.matrixWorld);
 
-    // Portée du raycast : longueur du laser en VR (PORTEE_RAYCASTER), mais
-    // illimitée pour le réticule PC (pas de laser visuel, donc pas de
-    // limite visuelle correspondante).
-    this.raycaster.far = event.portee ?? PORTEE_RAYCASTER;
+    // Portée du raycast : longueur du laser en VR (PORTEE_RAYCASTER).
+    this.raycaster.far = PORTEE_RAYCASTER;
 
     this.raycaster.ray.origin.setFromMatrixPosition(controller.matrixWorld);
     this.raycaster.ray.direction.set(0, 0, -1).applyMatrix4(tempMatrix);
@@ -210,31 +205,9 @@ export default class CameraController {
     return this._appliquerPilotage(vrState, dt);
   }
 
-  // Pilotage manette PC (hors VR) : même logique de déplacement que la VR
-  // (cf. _appliquerPilotage), avec en plus la sélection au réticule (centre
-  // de l'écran = direction de la caméra) sur le bouton A.
-  _handleGamepadInput(dt) {
-    this._rotationManuelle = false;
-    if (!this.manetteInput) return false;
-
-    const state = this.manetteInput.getState();
-    if (!state.connected) {
-      if (this.rocketAudio) this.rocketAudio.setVolumeCible(0);
-      return false;
-    }
-
-    this._rotationManuelle = state.rotation.x !== 0;
-
-    if (state.select) {
-      this._onSelect({ target: this.espace.camera, portee: Infinity });
-    }
-
-    return this._appliquerPilotage(state, dt);
-  }
-
-  // Logique de pilotage commune VR / manette PC à partir d'un état structuré
+  // Logique de pilotage à partir de l'état structuré des entrées VR
   // { translation: {x,y}, rotation: {x,y}, vertical, boutons: {A,B,X} }
-  // (cf. VRInputManager.getState() / ManettePC.getState()) :
+  // (cf. VRInputManager.getState()) :
   // translation/rotation/altitude du rig, timeScale (A/B) et bascule de la
   // vue détaillée (X).
   _appliquerPilotage(state, dt) {
@@ -360,10 +333,7 @@ export default class CameraController {
   update() {
     const dt = Math.min(0.1, this._horloge.getDelta());
 
-    let bougeManuellement = this._handleVRInput(dt);
-    if (!this.espace.renderer.xr.getSession()) {
-      bougeManuellement = this._handleGamepadInput(dt);
-    }
+    const bougeManuellement = this._handleVRInput(dt);
 
     if (this.rocketAudio) {
       this.rocketAudio.update();

@@ -9,8 +9,8 @@ import PoussiereSpatiale from './class/poussiere_spatiale.js';
 import DetailedView from './class/detailed_view.js';
 import CameraController from './camera_controller.js';
 import RocketAudio from './class/rocket_audio.js';
+import MusiqueAmbiance from './class/musique_ambiance.js';
 import VRInputManager from './class/vr_input_manager.js';
-import ManettePC from '../manette-pc/manette_pc.js';
 import * as THREE from 'three';
 import './style.css';
 
@@ -185,10 +185,14 @@ const messageBienvenue = new MessageBienvenue(espace.scene);
 // sensation de vitesse et d'échelle quand on se déplace au stick.
 const poussiere = new PoussiereSpatiale(espace.scene);
 
-// Gestion des périphériques (manettes VR, manette PC) et du son de propulsion
+// Gestion des périphériques (manettes VR) et du son de propulsion
 const vrInput = new VRInputManager(espace);
-const manettePC = new ManettePC();
 const rocketAudio = new RocketAudio();
+
+// Musique d'ambiance en boucle, faible volume. Démarre à la toute fin de
+// l'animation d'hyperespace (quand le tunnel a fini son fondu de sortie).
+const musiqueAmbiance = new MusiqueAmbiance();
+hyperespace.onSortieTerminee = () => musiqueAmbiance.demarrer();
 
 const cameraController = new CameraController({
   espace,
@@ -199,7 +203,6 @@ const cameraController = new CameraController({
   hyperespace,
   messageBienvenue,
   vrInput,
-  manetteInput: manettePC,
   rocketAudio,
 });
 

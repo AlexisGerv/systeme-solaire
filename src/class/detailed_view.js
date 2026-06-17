@@ -64,10 +64,7 @@ export default class DetailedView {
 
   // Synthèse vocale française ; ignore silencieusement si non supportée
   _lireTexte(texte) {
-    if (!('speechSynthesis' in window)) {
-      console.error("La synthèse vocale n'est pas supportée par ce navigateur.");
-      return;
-    }
+    if (!('speechSynthesis' in window)) return;
 
     // Stoppe une lecture en cours pour éviter la superposition
     window.speechSynthesis.cancel();

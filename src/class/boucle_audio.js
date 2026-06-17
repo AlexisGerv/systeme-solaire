@@ -30,26 +30,22 @@ export default class BoucleAudio {
   }
 
   async _charger(url) {
-    try {
-      const ctx = obtenirContexte();
-      if (!ctx) return;
+    const ctx = obtenirContexte();
+    if (!ctx) return;
 
-      const reponse = await fetch(url);
-      const donnees = await reponse.arrayBuffer();
-      this.buffer = await ctx.decodeAudioData(donnees);
+    const reponse = await fetch(url);
+    const donnees = await reponse.arrayBuffer();
+    this.buffer = await ctx.decodeAudioData(donnees);
 
-      this.gain = ctx.createGain();
-      this.gain.gain.value = this._volume;
-      this.gain.connect(ctx.destination);
+    this.gain = ctx.createGain();
+    this.gain.gain.value = this._volume;
+    this.gain.connect(ctx.destination);
 
-      if (this._onPret) this._onPret(this);
-      if (this._bouclePendante) {
-        const [debut, fin] = this._bouclePendante;
-        this._bouclePendante = null;
-        this.jouerBoucle(debut, fin);
-      }
-    } catch (e) {
-      console.warn(`Audio indisponible (${url}) :`, e);
+    if (this._onPret) this._onPret(this);
+    if (this._bouclePendante) {
+      const [debut, fin] = this._bouclePendante;
+      this._bouclePendante = null;
+      this.jouerBoucle(debut, fin);
     }
   }
 
@@ -71,7 +67,7 @@ export default class BoucleAudio {
   reprendre() {
     const ctx = obtenirContexte();
     if (ctx && ctx.state === 'suspended') {
-      ctx.resume().catch(() => {});
+      ctx.resume();
     }
   }
 
@@ -100,12 +96,11 @@ export default class BoucleAudio {
   }
 
   // Coupe la source en cours et annule une éventuelle boucle en attente.
-  // Robuste : un BufferSourceNode déjà arrêté lance une exception sur stop().
   stop() {
     this._bouclePendante = null;
     if (this.source) {
-      try { this.source.stop(); } catch (e) { /* déjà arrêté */ }
-      try { this.source.disconnect(); } catch (e) { /* déjà déconnecté */ }
+      this.source.stop();
+      this.source.disconnect();
       this.source = null;
     }
   }

@@ -71,17 +71,6 @@ export default class Espace {
     const vrButton = VRButton.createButton(this.renderer);
     document.body.appendChild(vrButton);
 
-    // Gérer les erreurs WebXR (ex. : émulateur Meta qui ne supporte pas XRWebGLBinding)
-    window.addEventListener('unhandledrejection', (event) => {
-      if (event.reason?.message?.includes('XRWebGLBinding')) {
-        event.preventDefault();
-        console.warn('L\'émulateur WebXR ne supporte pas XRWebGLBinding. Utilisez un casque VR réel.');
-        vrButton.textContent = 'VR non supporté (utilisez un casque réel)';
-        vrButton.style.opacity = '0.5';
-        vrButton.style.cursor = 'not-allowed';
-      }
-    });
-
     // 4. OrbitControls : permet de déplacer la caméra à la souris.
     //    - clic gauche + glisser : rotation autour du centre
     //    - clic droit + glisser  : translation (pan)

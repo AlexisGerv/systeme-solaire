@@ -72,14 +72,14 @@ export default class HyperEspace {
     this._audio = new BoucleAudio('/hyperspace.mp3', { volume: VOLUME_AUDIO });
     this._modeAudio = null;       // 'boucle' | 'sortie' | null
 
+    // Appelé une fois quand le fondu de sortie est terminé (fin réelle de
+    // l'animation). Sert à enchaîner sur la musique d'ambiance (cf. main.js).
+    this.onSortieTerminee = null;
+
     const loader = new GLTFLoader();
     loader.load(
       '/LIGHTSPEED.glb',
       (gltf) => this._initStreaks(gltf.scene),
-      undefined,
-      (err) => {
-        console.warn('Hyperespace : échec du chargement de LIGHTSPEED.glb', err);
-      },
     );
   }
 
@@ -101,10 +101,7 @@ export default class HyperEspace {
       }
     });
 
-    if (meshes.length === 0) {
-      console.warn('Hyperespace : aucun mesh dans LIGHTSPEED.glb');
-      return;
-    }
+    if (meshes.length === 0) return;
 
     const size = globalBox.getSize(new THREE.Vector3());
     const center = globalBox.getCenter(new THREE.Vector3());
@@ -281,6 +278,7 @@ export default class HyperEspace {
       for (const mat of this._materiauxStreaks) mat.opacity = opacite;
       if (this._fadeProgress >= 1) {
         this.hide();
+        if (this.onSortieTerminee) this.onSortieTerminee();
       }
     }
   }
