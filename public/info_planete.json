@@ -93,7 +93,8 @@
         "distance": 9376,
         "orbital_period": 0.319,
         "vitesse_orbitale_moyenne_km_s": 2.13,
-        "rotation_period": 0.319
+        "rotation_period": 0.319,
+        "visual_radius": 0.035
       },
       {
         "name": "Deimos",
@@ -103,7 +104,8 @@
         "distance": 23463,
         "orbital_period": 1.263,
         "vitesse_orbitale_moyenne_km_s": 1.35,
-        "rotation_period": 1.263
+        "rotation_period": 1.263,
+        "visual_radius": 0.035
       }
     ]
   },
@@ -130,7 +132,8 @@
         "distance": 128000,
         "orbital_period": 0.295,
         "vitesse_orbitale_moyenne_km_s": 31.50,
-        "rotation_period": 0.295
+        "rotation_period": 0.295,
+        "visual_radius": 0.035
       },
       {
         "name": "Adrastea",
@@ -140,7 +143,8 @@
         "distance": 129000,
         "orbital_period": 0.298,
         "vitesse_orbitale_moyenne_km_s": 31.38,
-        "rotation_period": 0.298
+        "rotation_period": 0.298,
+        "visual_radius": 0.035
       },
       {
         "name": "Amalthea",
@@ -150,7 +154,8 @@
         "distance": 181366,
         "orbital_period": 0.498,
         "vitesse_orbitale_moyenne_km_s": 26.39,
-        "rotation_period": 0.498
+        "rotation_period": 0.498,
+        "visual_radius": 0.06
       },
       {
         "name": "Thebe",
@@ -160,7 +165,8 @@
         "distance": 221889,
         "orbital_period": 0.675,
         "vitesse_orbitale_moyenne_km_s": 23.83,
-        "rotation_period": 0.675
+        "rotation_period": 0.675,
+        "visual_radius": 0.035
       },
       {
         "name": "Io",
@@ -170,7 +176,8 @@
         "distance": 421700,
         "orbital_period": 1.769,
         "vitesse_orbitale_moyenne_km_s": 17.33,
-        "rotation_period": 1.769
+        "rotation_period": 1.769,
+        "visual_radius": 0.16
       },
       {
         "name": "Europa",
@@ -180,7 +187,8 @@
         "distance": 671034,
         "orbital_period": 3.551,
         "vitesse_orbitale_moyenne_km_s": 13.74,
-        "rotation_period": 3.551
+        "rotation_period": 3.551,
+        "visual_radius": 0.14
       },
       {
         "name": "Ganymede",
@@ -190,7 +198,8 @@
         "distance": 1070400,
         "orbital_period": 7.155,
         "vitesse_orbitale_moyenne_km_s": 10.88,
-        "rotation_period": 7.155
+        "rotation_period": 7.155,
+        "visual_radius": 0.21
       },
       {
         "name": "Callisto",
@@ -200,7 +209,8 @@
         "distance": 1882700,
         "orbital_period": 16.689,
         "vitesse_orbitale_moyenne_km_s": 8.20,
-        "rotation_period": 16.689
+        "rotation_period": 16.689,
+        "visual_radius": 0.2
       },
       {
         "name": "Themisto",
@@ -210,7 +220,8 @@
         "distance": 7393216,
         "orbital_period": 130.02,
         "vitesse_orbitale_moyenne_km_s": 4.12,
-        "rotation_period": null
+        "rotation_period": null,
+        "visual_radius": 0.035
       },
       {
         "name": "Leda",
@@ -220,7 +231,8 @@
         "distance": 11165000,
         "orbital_period": 240.92,
         "vitesse_orbitale_moyenne_km_s": 3.37,
-        "rotation_period": null
+        "rotation_period": null,
+        "visual_radius": 0.035
       },
       {
         "name": "Himalia",
@@ -230,7 +242,8 @@
         "distance": 11461000,
         "orbital_period": 250.56,
         "vitesse_orbitale_moyenne_km_s": 3.31,
-        "rotation_period": 0.4
+        "rotation_period": 0.4,
+        "visual_radius": 0.05
       },
       {
         "name": "Lysithea",
@@ -240,7 +253,8 @@
         "distance": 11717000,
         "orbital_period": 259.2,
         "vitesse_orbitale_moyenne_km_s": 3.28,
-        "rotation_period": null
+        "rotation_period": null,
+        "visual_radius": 0.035
       },
       {
         "name": "Elara",
@@ -250,7 +264,8 @@
         "distance": 11741000,
         "orbital_period": 259.64,
         "vitesse_orbitale_moyenne_km_s": 3.29,
-        "rotation_period": 0.5
+        "rotation_period": 0.5,
+        "visual_radius": 0.035
       },
       {
         "name": "Ananke",
@@ -260,7 +275,8 @@
         "distance": 21276000,
         "orbital_period": -629.77,
         "vitesse_orbitale_moyenne_km_s": 2.45,
-        "rotation_period": null
+        "rotation_period": null,
+        "visual_radius": 0.035
       },
       {
         "name": "Carme",
@@ -270,7 +286,8 @@
         "distance": 23404000,
         "orbital_period": -734.17,
         "vitesse_orbitale_moyenne_km_s": 2.31,
-        "rotation_period": null
+        "rotation_period": null,
+        "visual_radius": 0.035
       },
       {
         "name": "Pasiphae",
@@ -280,7 +297,8 @@
         "distance": 23624000,
         "orbital_period": -743.63,
         "vitesse_orbitale_moyenne_km_s": 2.30,
-        "rotation_period": null
+        "rotation_period": null,
+        "visual_radius": 0.035
       },
       {
         "name": "Sinope",
@@ -290,7 +308,8 @@
         "distance": 23939000,
         "orbital_period": -758.9,
         "vitesse_orbitale_moyenne_km_s": 2.29,
-        "rotation_period": null
+        "rotation_period": null,
+        "visual_radius": 0.035
       }
     ]
   },
@@ -322,7 +341,8 @@
         "distance": 133584,
         "orbital_period": 0.575,
         "vitesse_orbitale_moyenne_km_s": 16.90,
-        "rotation_period": 0.575
+        "rotation_period": 0.575,
+        "visual_radius": 0.035
       },
       {
         "name": "Daphnis",
@@ -332,7 +352,8 @@
         "distance": 136505,
         "orbital_period": 0.594,
         "vitesse_orbitale_moyenne_km_s": 16.71,
-        "rotation_period": 0.594
+        "rotation_period": 0.594,
+        "visual_radius": 0.035
       },
       {
         "name": "Atlas",
@@ -342,7 +363,8 @@
         "distance": 137670,
         "orbital_period": 0.602,
         "vitesse_orbitale_moyenne_km_s": 16.64,
-        "rotation_period": 0.602
+        "rotation_period": 0.602,
+        "visual_radius": 0.035
       },
       {
         "name": "Prometheus",
@@ -352,7 +374,8 @@
         "distance": 139380,
         "orbital_period": 0.613,
         "vitesse_orbitale_moyenne_km_s": 16.54,
-        "rotation_period": 0.613
+        "rotation_period": 0.613,
+        "visual_radius": 0.035
       },
       {
         "name": "Pandora",
@@ -362,7 +385,8 @@
         "distance": 141720,
         "orbital_period": 0.629,
         "vitesse_orbitale_moyenne_km_s": 16.40,
-        "rotation_period": 0.629
+        "rotation_period": 0.629,
+        "visual_radius": 0.035
       },
       {
         "name": "Epimetheus",
@@ -372,7 +396,8 @@
         "distance": 151422,
         "orbital_period": 0.694,
         "vitesse_orbitale_moyenne_km_s": 15.87,
-        "rotation_period": 0.694
+        "rotation_period": 0.694,
+        "visual_radius": 0.035
       },
       {
         "name": "Janus",
@@ -382,7 +407,8 @@
         "distance": 151472,
         "orbital_period": 0.695,
         "vitesse_orbitale_moyenne_km_s": 15.86,
-        "rotation_period": 0.695
+        "rotation_period": 0.695,
+        "visual_radius": 0.035
       },
       {
         "name": "Mimas",
@@ -392,7 +418,8 @@
         "distance": 185539,
         "orbital_period": 0.942,
         "vitesse_orbitale_moyenne_km_s": 14.32,
-        "rotation_period": 0.942
+        "rotation_period": 0.942,
+        "visual_radius": 0.05
       },
       {
         "name": "Enceladus",
@@ -402,7 +429,8 @@
         "distance": 237948,
         "orbital_period": 1.37,
         "vitesse_orbitale_moyenne_km_s": 12.63,
-        "rotation_period": 1.37
+        "rotation_period": 1.37,
+        "visual_radius": 0.06
       },
       {
         "name": "Tethys",
@@ -412,7 +440,8 @@
         "distance": 294619,
         "orbital_period": 1.888,
         "vitesse_orbitale_moyenne_km_s": 11.35,
-        "rotation_period": 1.888
+        "rotation_period": 1.888,
+        "visual_radius": 0.09
       },
       {
         "name": "Telesto",
@@ -422,7 +451,8 @@
         "distance": 294619,
         "orbital_period": 1.888,
         "vitesse_orbitale_moyenne_km_s": 11.35,
-        "rotation_period": 1.888
+        "rotation_period": 1.888,
+        "visual_radius": 0.035
       },
       {
         "name": "Calypso",
@@ -432,7 +462,8 @@
         "distance": 294619,
         "orbital_period": 1.888,
         "vitesse_orbitale_moyenne_km_s": 11.35,
-        "rotation_period": 1.888
+        "rotation_period": 1.888,
+        "visual_radius": 0.035
       },
       {
         "name": "Dione",
@@ -442,7 +473,8 @@
         "distance": 377396,
         "orbital_period": 2.737,
         "vitesse_orbitale_moyenne_km_s": 10.03,
-        "rotation_period": 2.737
+        "rotation_period": 2.737,
+        "visual_radius": 0.09
       },
       {
         "name": "Helene",
@@ -452,7 +484,8 @@
         "distance": 377396,
         "orbital_period": 2.737,
         "vitesse_orbitale_moyenne_km_s": 10.03,
-        "rotation_period": 2.737
+        "rotation_period": 2.737,
+        "visual_radius": 0.035
       },
       {
         "name": "Rhea",
@@ -462,7 +495,8 @@
         "distance": 527068,
         "orbital_period": 4.518,
         "vitesse_orbitale_moyenne_km_s": 8.48,
-        "rotation_period": 4.518
+        "rotation_period": 4.518,
+        "visual_radius": 0.1
       },
       {
         "name": "Titan",
@@ -472,7 +506,8 @@
         "distance": 1221870,
         "orbital_period": 15.945,
         "vitesse_orbitale_moyenne_km_s": 5.57,
-        "rotation_period": 15.945
+        "rotation_period": 15.945,
+        "visual_radius": 0.2
       },
       {
         "name": "Hyperion",
@@ -482,7 +517,8 @@
         "distance": 1481009,
         "orbital_period": 21.276,
         "vitesse_orbitale_moyenne_km_s": 5.06,
-        "rotation_period": null
+        "rotation_period": null,
+        "visual_radius": 0.035
       },
       {
         "name": "Iapetus",
@@ -492,7 +528,8 @@
         "distance": 3560820,
         "orbital_period": 79.32,
         "vitesse_orbitale_moyenne_km_s": 3.26,
-        "rotation_period": 79.32
+        "rotation_period": 79.32,
+        "visual_radius": 0.1
       },
       {
         "name": "Phoebe",
@@ -502,7 +539,8 @@
         "distance": 12944300,
         "orbital_period": -550.31,
         "vitesse_orbitale_moyenne_km_s": 1.71,
-        "rotation_period": 0.4
+        "rotation_period": 0.4,
+        "visual_radius": 0.05
       }
     ]
   },
@@ -528,7 +566,8 @@
         "distance": 129900,
         "orbital_period": 1.41,
         "vitesse_orbitale_moyenne_km_s": 6.68,
-        "rotation_period": 1.41
+        "rotation_period": 1.41,
+        "visual_radius": 0.035
       },
       {
         "name": "Ariel",
@@ -538,7 +577,8 @@
         "distance": 190900,
         "orbital_period": 2.52,
         "vitesse_orbitale_moyenne_km_s": 5.51,
-        "rotation_period": 2.52
+        "rotation_period": 2.52,
+        "visual_radius": 0.035
       },
       {
         "name": "Umbriel",
@@ -548,7 +588,8 @@
         "distance": 266000,
         "orbital_period": 4.14,
         "vitesse_orbitale_moyenne_km_s": 4.67,
-        "rotation_period": 4.14
+        "rotation_period": 4.14,
+        "visual_radius": 0.035
       },
       {
         "name": "Titania",
@@ -558,7 +599,8 @@
         "distance": 435800,
         "orbital_period": 8.71,
         "vitesse_orbitale_moyenne_km_s": 3.64,
-        "rotation_period": 8.71
+        "rotation_period": 8.71,
+        "visual_radius": 0.035
       },
       {
         "name": "Oberon",
@@ -568,7 +610,8 @@
         "distance": 583500,
         "orbital_period": 13.46,
         "vitesse_orbitale_moyenne_km_s": 3.15,
-        "rotation_period": 13.46
+        "rotation_period": 13.46,
+        "visual_radius": 0.035
       }
     ]
   },
@@ -594,7 +637,8 @@
         "distance": 48227,
         "orbital_period": 0.294,
         "vitesse_orbitale_moyenne_km_s": 11.92,
-        "rotation_period": 0.294
+        "rotation_period": 0.294,
+        "visual_radius": 0.035
       },
       {
         "name": "Thalassa",
@@ -604,7 +648,8 @@
         "distance": 50074,
         "orbital_period": 0.311,
         "vitesse_orbitale_moyenne_km_s": 11.70,
-        "rotation_period": 0.311
+        "rotation_period": 0.311,
+        "visual_radius": 0.035
       },
       {
         "name": "Despina",
@@ -614,7 +659,8 @@
         "distance": 52526,
         "orbital_period": 0.335,
         "vitesse_orbitale_moyenne_km_s": 11.39,
-        "rotation_period": 0.335
+        "rotation_period": 0.335,
+        "visual_radius": 0.035
       },
       {
         "name": "Galatea",
@@ -624,7 +670,8 @@
         "distance": 61953,
         "orbital_period": 0.429,
         "vitesse_orbitale_moyenne_km_s": 10.49,
-        "rotation_period": 0.429
+        "rotation_period": 0.429,
+        "visual_radius": 0.035
       },
       {
         "name": "Larissa",
@@ -634,7 +681,8 @@
         "distance": 73548,
         "orbital_period": 0.555,
         "vitesse_orbitale_moyenne_km_s": 9.61,
-        "rotation_period": 0.555
+        "rotation_period": 0.555,
+        "visual_radius": 0.035
       },
       {
         "name": "Hippocamp",
@@ -644,7 +692,8 @@
         "distance": 105283,
         "orbital_period": 0.936,
         "vitesse_orbitale_moyenne_km_s": 8.16,
-        "rotation_period": null
+        "rotation_period": null,
+        "visual_radius": 0.035
       },
       {
         "name": "Proteus",
@@ -654,7 +703,8 @@
         "distance": 117646,
         "orbital_period": 1.122,
         "vitesse_orbitale_moyenne_km_s": 7.62,
-        "rotation_period": 1.122
+        "rotation_period": 1.122,
+        "visual_radius": 0.035
       },
       {
         "name": "Triton",
@@ -664,7 +714,8 @@
         "distance": 354759,
         "orbital_period": -5.877,
         "vitesse_orbitale_moyenne_km_s": 4.39,
-        "rotation_period": 5.877
+        "rotation_period": 5.877,
+        "visual_radius": 0.035
       },
       {
         "name": "Nereid",
@@ -674,7 +725,8 @@
         "distance": 5513818,
         "orbital_period": 360.13,
         "vitesse_orbitale_moyenne_km_s": 1.11,
-        "rotation_period": 0.48
+        "rotation_period": 0.48,
+        "visual_radius": 0.035
       }
     ]
   },
@@ -700,7 +752,8 @@
         "distance": 19591,
         "orbital_period": 6.387,
         "vitesse_orbitale_moyenne_km_s": 0.22,
-        "rotation_period": 6.387
+        "rotation_period": 6.387,
+        "visual_radius": 0.07
       },
       {
         "name": "Nix",
@@ -710,7 +763,8 @@
         "distance": 48694,
         "orbital_period": 24.854,
         "vitesse_orbitale_moyenne_km_s": 0.14,
-        "rotation_period": null
+        "rotation_period": null,
+        "visual_radius": 0.035
       },
       {
         "name": "Hydra",
@@ -720,7 +774,8 @@
         "distance": 64738,
         "orbital_period": 38.2,
         "vitesse_orbitale_moyenne_km_s": 0.12,
-        "rotation_period": null
+        "rotation_period": null,
+        "visual_radius": 0.035
       }
     ]
   }

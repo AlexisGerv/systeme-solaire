@@ -20,16 +20,9 @@ const espace = new Espace();
 // Le fichier JSON est servi par Vite depuis /public.
 const infoPlanetes = await fetch('/info_planete.json').then((r) => r.json());
 
-// Tailles visibles connues pour les lunes notables (en unités de scène).
-// Les autres reçoivent TAILLE_DEFAUT : volontairement minuscule, beaucoup
-// de ces lunes sont des cailloux de quelques dizaines de km.
-const TAILLE_LUNE = {
-  Io: 0.16, Europa: 0.14, Ganymede: 0.21, Callisto: 0.20,
-  Amalthea: 0.06, Himalia: 0.05,
-  Titan: 0.20, Rhea: 0.10, Iapetus: 0.10, Dione: 0.09,
-  Tethys: 0.09, Enceladus: 0.06, Mimas: 0.05, Hyperion: 0.05, Phoebe: 0.05,
-  Charon: 0.07, Nix: 0.035, Hydra: 0.035
-};
+// Repli de taille si une lune n'a pas de visual_radius dans le JSON
+// (volontairement minuscule : beaucoup de lunes sont des cailloux de
+// quelques dizaines de km). Toutes les vraies tailles vivent dans le JSON.
 const TAILLE_DEFAUT = 0.035;
 
 // Vitesse angulaire à l'écran : K / |période en jours|, bornée pour rester
@@ -60,7 +53,7 @@ function ajouterLunes(planeteData, planeteAstre, rmin, rmax) {
       scene: espace.scene,
       parent: planeteAstre.anchor,
       texturePath: '/2k_moon.jpg',
-      rayon: m.visual_radius ?? TAILLE_LUNE[m.name] ?? TAILLE_DEFAUT,
+      rayon: m.visual_radius ?? TAILLE_DEFAUT,
       distanceOrbite: rmin + t * (rmax - rmin),
       vitesseOrbite: m.visual_orbital_speed ?? vitesseAngulaire(m.orbital_period),
       vitesseRotation: m.visual_rotation_speed ?? vitesseAngulaire(m.rotation_period ?? m.orbital_period),

@@ -4,7 +4,7 @@ import BoucleAudio from './boucle_audio.js';
 // demarrer() est appelé à la fin de l'animation d'hyperespace (cf. main.js).
 // À ce moment l'utilisateur a déjà interagi (gâchette de fin de tutoriel) et
 // l'AudioContext tourne déjà (son d'hyperespace), donc la lecture est autorisée.
-const VOLUME = 0.12;f
+const VOLUME = 0.12;
 
 export default class MusiqueAmbiance {
   constructor(url = '/musique ambiance.mp3') {

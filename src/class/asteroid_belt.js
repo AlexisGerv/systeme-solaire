@@ -54,8 +54,7 @@ export default class CeintureAsteroides {
     for (let i = 0; i < this.nombre; i++) {
       const angle = Math.random() * Math.PI * 2;
       const rayon = THREE.MathUtils.lerp(this.rayonMin, this.rayonMax, Math.random());
-      // Hauteur biaisée vers 0 (somme de deux randoms = quasi-gaussien)
-      // -> ceinture plus dense au plan de l'écliptique, qui s'étire un peu.
+      // La hauteur est aléatoire dans [-epaisseur, +epaisseur] pour former un disque.
       const hauteur = (Math.random() + Math.random() - 1) * this.epaisseur;
       const taille = THREE.MathUtils.lerp(this.tailleMin, this.tailleMax, Math.random());
 

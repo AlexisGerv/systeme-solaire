@@ -21,14 +21,13 @@ export default class Espace {
     const ambiante = new THREE.AmbientLight(0xffffff, 0.08);
     this.scene.add(ambiante);
 
-    // Far plane à 1000 : marge confortable au-delà de Kuiper (rayon ~100).
     this.camera = new THREE.PerspectiveCamera(
       60,
       window.innerWidth / window.innerHeight,
       0.1,
       1000,
     );
-    // On met la caméra dans un "rig" pour pouvoir la déplacer en VR et PC.
+    // On met la caméra dans un "rig" pour pouvoir la déplacer en VR.
     this.rig = new THREE.Group();
     this.rig.position.set(0, 0, 0); // Au centre du système par défaut
     this.scene.add(this.rig);
@@ -53,8 +52,8 @@ export default class Espace {
     this.renderer = new THREE.WebGLRenderer({ antialias: true });
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     this.renderer.setPixelRatio(window.devicePixelRatio);
-    // Activation globale des ombres. PCFSoftShadowMap = ombres adoucies
-    // (un peu plus coûteux mais bien plus joli que les ombres "pixelisées").
+    // Activer les ombres : les planètes et lunes projettent des ombres sur
+    // elles-mêmes et sur leurs lunes, mais pas sur les autres planètes.
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     // Tone mapping ACES : compresse les hautes valeurs (HDR) vers le 0-1
@@ -64,7 +63,8 @@ export default class Espace {
     // toneMappingExposure = 1.0 = neutre ; baisser = scène plus sombre.
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.0;
-    // Activer le support WebXR (indispensable pour le mode VR).
+    
+    
     this.renderer.xr.enabled = true;
     document.body.appendChild(this.renderer.domElement);
     // Bouton "Enter VR" ajouté automatiquement par Three.js.
@@ -91,10 +91,8 @@ export default class Espace {
       this.renderer.setSize(window.innerWidth, window.innerHeight);
     });
   }
-
-  // Une seule méthode de rendu, appelée une fois par frame depuis main.js
+  
   render() {
-    // Indispensable quand enableDamping = true : applique l'inertie.
     this.controls.update();
     this.renderer.render(this.scene, this.camera);
   }

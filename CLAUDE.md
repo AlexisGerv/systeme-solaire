@@ -94,7 +94,7 @@ Mapping **logarithmique** km → plage `moon_range: [rmin, rmax]` du JSON :
 t = (log10(distance) - log10(min)) / (log10(max) - log10(min))
 distanceOrbite = rmin + t * (rmax - rmin)
 ```
-Tailles : `visual_radius` du JSON, sinon table `TAILLE_LUNE` de main.js, sinon `TAILLE_DEFAUT = 0.035`.
+Tailles : `visual_radius` du JSON (présent sur **toutes** les lunes), sinon repli `TAILLE_DEFAUT = 0.035` de main.js.
 
 ### VR : rig, contrôleurs, pilotage
 
